@@ -131,10 +131,14 @@ for d in DOMAINS:
 
     for row in data:
         try:
-            # FORMATAÇÃO DE DATA DD/MM/YYYY, REMOVENDO QUALQUER APÓSTROFO OU ASPAS
+            # ENVIA DATA COMO FORMULA =DATE(YYYY,MM,DD) PARA GOOGLE SHEETS
             data_valor = str(row.get("Dimension.DATE", "")).strip().strip("'").strip('"')
             try:
-                data_convertida = datetime.strptime(data_valor, "%Y-%m-%d").strftime("%Y-%m-%d")
+                # Divide AAAA-MM-DD em partes para fórmula DATE
+                ano = data_valor[:4]
+                mes = data_valor[5:7]
+                dia = data_valor[8:10]
+                data_convertida = f'=DATE({ano},{mes},{dia})'
             except Exception:
                 data_convertida = data_valor
 
