@@ -163,4 +163,4 @@ else:
 # =========================
 elapsed_time = time.time() - start_time
 minutes, seconds = divmod(elapsed_time, 60)
-print(f"⏱ Tempo total: {int(minutes)}m {seconds:.
+print(f"⏱ Tempo total: {int(minutes)}m {seconds:.2f}s")
