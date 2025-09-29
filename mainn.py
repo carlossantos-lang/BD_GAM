@@ -86,7 +86,10 @@ except gspread.WorksheetNotFound:
 # =========================
 # CABEÇALHO
 # =========================
-headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+headers = [
+    "Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests",
+    "Revenue (USD)", "Cobertura", "eCPM"
+]
 all_rows = []
 
 # =========================
@@ -94,8 +97,15 @@ all_rows = []
 # =========================
 for d in DOMAINS:
     payload = {
-        "dimensions": ["DATE","HOUR","SITE_NAME","CHANNEL_NAME","URL_NAME","AD_UNIT_NAME"],
-        "columns": ["AD_EXCHANGE_TOTAL_REQUESTS","AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE","AD_EXCHANGE_MATCH_RATE","AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM"],
+        "dimensions": [
+            "DATE", "HOUR", "SITE_NAME", "CHANNEL_NAME", "URL_NAME", "AD_UNIT_NAME"
+        ],
+        "columns": [
+            "AD_EXCHANGE_TOTAL_REQUESTS",
+            "AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE",
+            "AD_EXCHANGE_MATCH_RATE",
+            "AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM"
+        ],
         "start_date": DATE_STRING,
         "end_date": DATE_STRING,
         "domain": d["domain"],
@@ -103,7 +113,10 @@ for d in DOMAINS:
         "site_name": "",
         "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=broadcast,utm_source=newsletter"
     }
-    headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
+    headers_req = {
+        "Authorization": API_TOKEN,
+        "Content-Type": "application/json"
+    }
 
     try:
         resp = requests.post(API_URL, json=payload, headers=headers_req)
@@ -118,8 +131,8 @@ for d in DOMAINS:
 
     for row in data:
         try:
-            # Pega valor da data e força como YYYY-MM-DD SEM ASPAS
-            data_valor = row.get("Dimension.DATE", "")
+            # TRATAMENTO DE DATA: REMOVE APÓSTROFOS/ASPAS DO INÍCIO/FIM
+            data_valor = str(row.get("Dimension.DATE", "")).strip().strip("'").strip('"')
             try:
                 data_convertida = datetime.strptime(data_valor, "%Y-%m-%d").strftime("%Y-%m-%d")
             except Exception:
@@ -137,11 +150,11 @@ for d in DOMAINS:
 
             all_rows.append([
                 data_convertida,
-                safe_int(row.get("Dimension.HOUR",0)),
-                row.get("Dimension.SITE_NAME",""),
-                row.get("Dimension.CHANNEL_NAME",""),
-                row.get("Dimension.URL_NAME",""),
-                row.get("Dimension.AD_UNIT_NAME",""),
+                safe_int(row.get("Dimension.HOUR", 0)),
+                row.get("Dimension.SITE_NAME", ""),
+                row.get("Dimension.CHANNEL_NAME", ""),
+                row.get("Dimension.URL_NAME", ""),
+                row.get("Dimension.AD_UNIT_NAME", ""),
                 requests_val,
                 round(revenue, 2),
                 0 if match_rate == 0 else round(match_rate, 4),
@@ -154,7 +167,7 @@ for d in DOMAINS:
 # ATUALIZAR PLANILHA
 # =========================
 if all_rows:
-    worksheet.update(values=[headers]+all_rows, range_name="A1")
+    worksheet.update(values=[headers] + all_rows, range_name="A1")
     print(f"✅ Aba '{SHEET_NAME}' atualizada com {len(all_rows)} linhas.")
 else:
     print("⚠️ Nenhuma linha retornada.")
