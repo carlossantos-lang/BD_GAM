@@ -1,5 +1,6 @@
 gspread
 google-auth
 pytz
+google-api-python-client
 requests
 
