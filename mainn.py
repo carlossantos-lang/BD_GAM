@@ -32,7 +32,7 @@ DATE_STRING = "2025-09-29"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-    DOMAINS = [
+DOMAINS = [
     {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
     {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
     {"domain": "de8.com.br", "networkCode": "22705810042", "currency": "USD"},
@@ -47,6 +47,7 @@ API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
     {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
     {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
     {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
+    {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
 ]
 
 def safe_float(v, default=0.0):
