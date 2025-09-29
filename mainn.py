@@ -144,7 +144,7 @@ for d in DOMAINS:
                 row.get("Dimension.AD_UNIT_NAME",""),
                 requests_val,
                 round(revenue, 2),                       # float -> 233.4 (sem aspas)
-                None if match_rate == 0 else round(match_rate, 4),  # vazio se 0
+                0 if match_rate == 0 else round(match_rate, 4),  # vazio se 0
                 round(ecpm, 2)                           # float
             ])
         except Exception as e:
