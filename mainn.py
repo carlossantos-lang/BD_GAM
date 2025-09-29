@@ -124,9 +124,9 @@ for d in DOMAINS:
 
     for row in data:
         try:
-            revenue = safe_float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
-            ecpm = safe_float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
-            match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
+            revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
+            ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
+            match_rate = safe_int(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
             requests_val = safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0))
 
             # Converter BRL → USD
