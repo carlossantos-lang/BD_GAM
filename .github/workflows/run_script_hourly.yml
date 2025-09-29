@@ -2,8 +2,8 @@ name: Rodar script Python a cada hora
 
 on:
   schedule:
-    - cron: '0 * * * *'  # A cada hora no minuto 0
-  workflow_dispatch:  # Permite rodar manualmente
+    - cron: '0 * * * *'  # roda a cada hora
+  workflow_dispatch:      # permite rodar manualmente
 
 jobs:
   run-python-script:
@@ -19,9 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependências
-        run: |
-          pip install -r requirements.txt || echo "Sem requirements.txt"
+        run: pip install -r requirements.txt
 
       - name: Executar script
-        run: |
-          python main_11.py
+        run: python main_11.py
