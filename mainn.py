@@ -28,7 +28,7 @@ gc = gspread.authorize(credentials)
 # =========================
 SPREADSHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 SHEET_NAME = "BD - GAM"
-DATE_STRING = "2025-09-29"
+DATE_STRING = "2025-09-28"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
