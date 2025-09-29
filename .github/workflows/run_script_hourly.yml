@@ -24,4 +24,4 @@ jobs:
 
       - name: Executar script
         run: |
-          python ultimotesteste123.py
+          python main (1).py
