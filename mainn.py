@@ -5,7 +5,8 @@ import time
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import date
+from datetime import datetime
+import pytz
 
 start_time = time.time()
 
@@ -16,7 +17,15 @@ SPREADSHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
-DATE_STRING = date.today().strftime("%Y-%m-%d")
+
+# Data de hoje em GMT-3 (Brasília)
+fuso_br = pytz.timezone('America/Sao_Paulo')
+today = datetime.now(fuso_br)
+DATE_STRING = today.strftime('%Y-%m-%d')
+
+# Se quiser a data de ontem, use:
+# today = today - timedelta(days=1)
+# DATE_STRING = today.strftime('%Y-%m-%d')
 
 DOMAINS = [
     {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
@@ -131,7 +140,7 @@ for d in DOMAINS:
 
     for row in data:
         try:
-            # ENVIE COMO FÓRMULA PARA NÃO VIR COM APÓSTROFO
+            # FORMATO QUE MOSTRARÁ EXATAMENTE YYYY-MM-DD SEM APÓSTROFO na planilha
             data_valor = str(row.get("Dimension.DATE", "")).strip().strip("'").strip('"')
             data_convertida = f'="{data_valor}"'
 
