@@ -24,4 +24,4 @@ jobs:
 
       - name: Executar script
         run: |
-          python main (1).py
+          python main_11.py
