@@ -60,7 +60,7 @@ def safe_int(v, default=0):
         return default
 
 # =========================
-# CONEXÃO GOOGLE SHEETS
+# CONEXÃO GOOGLE SHEETS (mantida)
 # =========================
 creds_json = os.environ['GCP_CREDENTIALS']
 google_creds = json.loads(creds_json)
@@ -134,6 +134,7 @@ for d in DOMAINS:
                 revenue /= EXCHANGE_RATE
                 ecpm /= EXCHANGE_RATE
 
+            # ======= GRAVAR NÚMEROS (não strings) =======
             all_rows.append([
                 row.get("Dimension.DATE",""),
                 safe_int(row.get("Dimension.HOUR",0)),
@@ -142,9 +143,9 @@ for d in DOMAINS:
                 row.get("Dimension.URL_NAME",""),
                 row.get("Dimension.AD_UNIT_NAME",""),
                 requests_val,
-                f"{revenue:.2f}".replace(".", ","),                  # Revenue formatado
-                "" if match_rate == 0 else f"{match_rate:.4f}".replace(".", ","),  # Cobertura opcional
-                f"{ecpm:.2f}".replace(".", ",")                      # eCPM formatado
+                round(revenue, 2),                       # float -> 233.4 (sem aspas)
+                None if match_rate == 0 else round(match_rate, 4),  # vazio se 0
+                round(ecpm, 2)                           # float
             ])
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
