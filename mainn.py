@@ -32,10 +32,21 @@ DATE_STRING = "2025-09-29"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-DOMAINS = [
+    DOMAINS = [
     {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
     {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
-    # ... restante dos domínios
+    {"domain": "de8.com.br", "networkCode": "22705810042", "currency": "USD"},
+    {"domain": "rendademae.com", "networkCode": "22883124850", "currency": "USD"},
+    {"domain": "creativepulse23.com", "networkCode": "23144189085", "currency": "USD"},
+    {"domain": "agoranamidia.com", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "guiabancario.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "caxiason.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "meucartaoideal.com", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "thecredito.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "meucreditoagora.com", "networkCode": "21761578357", "currency": "BRL"},
+    {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
+    {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
+    {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
 ]
 
 def safe_float(v, default=0.0):
