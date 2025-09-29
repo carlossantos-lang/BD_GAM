@@ -1,8 +1,9 @@
 name: Rodar script Python a cada hora
 
+# Dispara a cada hora
 on:
   schedule:
-    - cron: '0 * * * *'  # roda a cada hora
+    - cron: '0 * * * *'  # todo início de hora
   workflow_dispatch:      # permite rodar manualmente
 
 jobs:
@@ -10,16 +11,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Clonar o repositório
       - name: Checar código
         uses: actions/checkout@v3
 
+      # 2️⃣ Configurar Python
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3️⃣ Instalar dependências
       - name: Instalar dependências
         run: pip install -r requirements.txt
 
-      - name: Executar script
-        run: python main_11.py
+      # 4️⃣ Executar script Python
+      - name: Executar mainn.py
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}  # credencial da Service Account
+        run: python mainn.py
