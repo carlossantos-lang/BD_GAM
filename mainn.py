@@ -5,7 +5,7 @@ import time
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import date, datetime
+from datetime import date
 
 start_time = time.time()
 
@@ -50,15 +50,6 @@ def safe_int(v, default=0):
         return int(float(v))
     except (TypeError, ValueError):
         return default
-
-def date_to_gsheet_serial(date_str):
-    """
-    Converte '2025-09-29' (string) para número serial de data do Google Sheets (ex: 45106).
-    """
-    dt = datetime.strptime(date_str, "%Y-%m-%d")
-    base = datetime(1899, 12, 30)
-    delta = dt - base
-    return float(delta.days)
 
 # =========================
 # CONEXÃO GOOGLE SHEETS
@@ -140,12 +131,9 @@ for d in DOMAINS:
 
     for row in data:
         try:
-            # DATA EM FORMATO SERIAL DO GOOGLE SHEETS
+            # ENVIE COMO FÓRMULA PARA NÃO VIR COM APÓSTROFO
             data_valor = str(row.get("Dimension.DATE", "")).strip().strip("'").strip('"')
-            try:
-                data_convertida = date_to_gsheet_serial(data_valor)
-            except Exception:
-                data_convertida = data_valor  # fallback
+            data_convertida = f'="{data_valor}"'
 
             revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
             ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
