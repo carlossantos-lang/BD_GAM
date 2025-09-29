@@ -134,7 +134,7 @@ for d in DOMAINS:
             # FORMATAÇÃO DE DATA DD/MM/YYYY, REMOVENDO QUALQUER APÓSTROFO OU ASPAS
             data_valor = str(row.get("Dimension.DATE", "")).strip().strip("'").strip('"')
             try:
-                data_convertida = datetime.strptime(data_valor, "%Y-%m-%d").strftime("%Y/%m/%d")
+                data_convertida = datetime.strptime(data_valor, "%Y-%m-%d").strftime("%Y-%m-%d")
             except Exception:
                 data_convertida = data_valor
 
