@@ -110,7 +110,7 @@ for d in DOMAINS:
         "domain": d["domain"],
         "networkCode": d["networkCode"],
         "site_name": "",
-        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=spush"
+        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=spush,utm_source=pushalert"
     }
     headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
 
