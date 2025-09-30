@@ -22,7 +22,6 @@ today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
 
 DOMAINS = [
-   [
     {domain: "thecredito.com.br", networkCode: "21655197668", currency: "BRL"},
     {domain: "meucartaoideal.com", networkCode: "21655197668", currency: "BRL"},
     {domain: "caxiason.com.br", networkCode: "21655197668", currency: "BRL"},
