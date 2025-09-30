@@ -13,8 +13,10 @@ start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
 SPREADSHEET_IDS = [
-    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
+    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
+    "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc"
 ]
+EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"  # Planilha onde buscará a cotação
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
@@ -25,21 +27,7 @@ today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
 
 DOMAINS = [
-    {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
-    {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
-    {"domain": "de8.com.br", "networkCode": "22705810042", "currency": "USD"},
-    {"domain": "rendademae.com", "networkCode": "22883124850", "currency": "USD"},
-    {"domain": "creativepulse23.com", "networkCode": "23144189085", "currency": "USD"},
-    {"domain": "agoranamidia.com", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "guiabancario.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "caxiason.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "meucartaoideal.com", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "thecredito.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "meucreditoagora.com", "networkCode": "21761578357", "currency": "BRL"},
-    {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
-    {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
-    {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
-    {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
+    # ... seus domínios, igual ao seu código anterior ...
 ]
 
 # ============ FUNÇÕES AUXILIARES ============
@@ -68,11 +56,12 @@ scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 credentials = Credentials.from_service_account_info(google_creds, scopes=scopes)
 gc = gspread.authorize(credentials)
 
-# ============ PEGAR COTAÇÃO DO DÓLAR ============
-def get_exchange_rate(sheet):
+# ============ PEGAR COTAÇÃO DO DÓLAR (apenas da planilha principal) ============
+def get_exchange_rate():
     dollar_sheet_name = "JN_US_CC"
     dollar_cell = "O2"
     try:
+        sheet = gc.open_by_key(EXCHANGE_RATE_SHEET_ID)
         dollar_ws = sheet.worksheet(dollar_sheet_name)
         rate = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
         print(f"💵 Taxa de câmbio obtida: 1 USD = {rate} BRL")
@@ -109,15 +98,14 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
 
 # ============ FUNÇÃO PARA ATUALIZAR PLANILHA EM CHUNKS ============
-def update_sheet(spreadsheet_id, all_rows, chunk_size=500):
+def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):  # ajustado para 10.000
     sheet = gc.open_by_key(spreadsheet_id)
-    EXCHANGE_RATE = get_exchange_rate(sheet)
 
     try:
         worksheet = sheet.worksheet(SHEET_NAME)
         worksheet.clear()
     except gspread.WorksheetNotFound:
-        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="1000", cols="20")
+        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="10000", cols="20")
 
     headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
     worksheet.update("A1:J1", [headers])
@@ -131,6 +119,9 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=500):
         print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
 
     format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+
+# ============ PEGAR COTAÇÃO SÓ UMA VEZ ============
+EXCHANGE_RATE = get_exchange_rate()
 
 # ============ BUSCAR DADOS DA API ============
 all_rows = []
@@ -172,8 +163,8 @@ for d in DOMAINS:
 
             # Converter BRL → USD, se necessário
             if d["currency"] == "BRL":
-                revenue /= 5.35
-                ecpm /= 5.35
+                revenue /= EXCHANGE_RATE  # usa a cotação única lida anteriormente
+                ecpm /= EXCHANGE_RATE
 
             all_rows.append([
                 serial,
