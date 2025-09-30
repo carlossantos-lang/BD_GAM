@@ -17,12 +17,12 @@ SPREADSHEET_IDS = [
     "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
     "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q"
 ]
-EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"  # Planilha onde buscará a cotação
+EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-# Data de hoje em GMT-3 (Brasília)
+# Data atual em GMT-3 (Brasília)
 fuso_br = pytz.timezone('America/Sao_Paulo')
 today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
@@ -71,7 +71,7 @@ scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 credentials = Credentials.from_service_account_info(google_creds, scopes=scopes)
 gc = gspread.authorize(credentials)
 
-# ============ PEGAR COTAÇÃO DO DÓLAR (apenas da planilha principal) ============
+# ============ PEGAR COTAÇÃO DO DÓLAR ============
 def get_exchange_rate():
     dollar_sheet_name = "JN_US_CC"
     dollar_cell = "O2"
@@ -116,11 +116,12 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
 def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
     sheet = gc.open_by_key(spreadsheet_id)
 
+    # Tenta abrir a worksheet, se não existir, cria já com muitas linhas.
     try:
         worksheet = sheet.worksheet(SHEET_NAME)
         worksheet.clear()
     except gspread.WorksheetNotFound:
-        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="10000", cols="20")
+        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
 
     headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
     worksheet.update(range_name="A1:J1", values=[headers])
@@ -130,10 +131,15 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
         start_row = i + 2
         end_row = start_row + len(chunk) - 1
         range_str = f"A{start_row}:J{end_row}"
+        needed_rows = end_row
+
+        # Adiciona linhas se necessário
+        if worksheet.row_count < needed_rows:
+            worksheet.add_rows(needed_rows - worksheet.row_count)
+
         worksheet.update(range_name=range_str, values=chunk)
         print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
 
-    # Protegido para não travar seu script (timeout, etc)
     try:
         format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
     except Exception as e:
@@ -200,7 +206,7 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ ATUALIZAR AMBAS PLANILHAS ============
+# ============ ATUALIZAR TODAS AS PLANILHAS ============
 for sheet_id in SPREADSHEET_IDS:
     update_sheet(sheet_id, all_rows)
 
