@@ -7,11 +7,15 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pytz
+from googleapiclient.discovery import build
 
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES =============
-SPREADSHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
+SPREADSHEET_IDS = [
+    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
+    "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc"
+]
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
@@ -40,7 +44,6 @@ DOMAINS = [
 ]
 
 # ============ FUNÇÕES AUXILIARES =============
-
 def safe_float(v, default=0.0):
     try:
         return float(str(v).replace(",", "."))
@@ -54,7 +57,6 @@ def safe_int(v, default=0):
         return default
 
 def date_to_gsheet_serial(date_str):
-    """Converte 'YYYY-MM-DD' para serial number do Google Sheets."""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     base = datetime(1899, 12, 30)
     delta = dt - base
@@ -66,31 +68,66 @@ google_creds = json.loads(creds_json)
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 credentials = Credentials.from_service_account_info(google_creds, scopes=scopes)
 gc = gspread.authorize(credentials)
-sheet = gc.open_by_key(SPREADSHEET_ID)
 
 # ============ PEGAR COTAÇÃO DO DÓLAR =============
-dollar_sheet_name = "JN_US_CC"
-dollar_cell = "O2"
-try:
-    dollar_ws = sheet.worksheet(dollar_sheet_name)
-    EXCHANGE_RATE = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
-    print(f"💵 Taxa de câmbio obtida: 1 USD = {EXCHANGE_RATE} BRL")
-except Exception as e:
-    EXCHANGE_RATE = 5.35
-    print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: {EXCHANGE_RATE} BRL")
+def get_exchange_rate(sheet):
+    dollar_sheet_name = "JN_US_CC"
+    dollar_cell = "O2"
+    try:
+        dollar_ws = sheet.worksheet(dollar_sheet_name)
+        rate = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
+        print(f"💵 Taxa de câmbio obtida: 1 USD = {rate} BRL")
+        return rate
+    except Exception as e:
+        print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: 5.35 BRL")
+        return 5.35
 
-# ============ PREPARAR ABA PRINCIPAL =============
-try:
-    worksheet = sheet.worksheet(SHEET_NAME)
-    worksheet.clear()
-except gspread.WorksheetNotFound:
-    worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="1000", cols="20")
+# ============ FUNÇÃO PARA ATUALIZAR PLANILHA ============
+def update_sheet(spreadsheet_id, all_rows):
+    sheet = gc.open_by_key(spreadsheet_id)
+    EXCHANGE_RATE = get_exchange_rate(sheet)
 
-# ============ CABEÇALHO =============
-headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+    try:
+        worksheet = sheet.worksheet(SHEET_NAME)
+        worksheet.clear()
+    except gspread.WorksheetNotFound:
+        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="1000", cols="20")
+
+    headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+    worksheet.update(values=[headers]+all_rows, range_name="A1")
+    print(f"✅ Aba '{SHEET_NAME}' da planilha {spreadsheet_id} atualizada com {len(all_rows)} linhas.")
+
+    # Formatar coluna A como data
+    format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+
+def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
+    credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
+    service = build('sheets', 'v4', credentials=credentials)
+    metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    sheet_id = None
+    for s in metadata['sheets']:
+        if s['properties']['title'] == sheet_name:
+            sheet_id = s['properties']['sheetId']
+            break
+    if sheet_id is None:
+        print(f'❌ Não achou a aba "{sheet_name}"!')
+        return
+    body = {
+        "requests": [
+            {
+                "repeatCell": {
+                    "range": {"sheetId": sheet_id, "startRowIndex": 1, "startColumnIndex": 0, "endColumnIndex": 1},
+                    "cell": {"userEnteredFormat": {"numberFormat": {"type": "DATE", "pattern": "yyyy-MM-dd"}}},
+                    "fields": "userEnteredFormat.numberFormat"
+                }
+            }
+        ]
+    }
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+    print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
+
+# ============ BUSCAR DADOS DA API ============
 all_rows = []
-
-# ============ BUSCAR DADOS DA API =============
 for d in DOMAINS:
     payload = {
         "dimensions": ["DATE","HOUR","SITE_NAME","CHANNEL_NAME","URL_NAME","AD_UNIT_NAME"],
@@ -100,7 +137,7 @@ for d in DOMAINS:
         "domain": d["domain"],
         "networkCode": d["networkCode"],
         "site_name": "",
-        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=broadcast,utm_source=newsletter"
+        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=spush"
     }
     headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
 
@@ -121,17 +158,16 @@ for d in DOMAINS:
             try:
                 serial = date_to_gsheet_serial(data_valor)
             except Exception:
-                serial = data_valor  # fallback se houver alguma data inválida
-
+                serial = data_valor
             revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
             ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
             match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
             requests_val = safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0))
 
             # Converter BRL → USD, se necessário
-            if d["currency"] == "BRL" and EXCHANGE_RATE:
-                revenue /= EXCHANGE_RATE
-                ecpm /= EXCHANGE_RATE
+            if d["currency"] == "BRL":
+                revenue /= 5.35  # valor padrão antes de pegar da planilha
+                ecpm /= 5.35
 
             all_rows.append([
                 serial,
@@ -148,64 +184,11 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ ATUALIZAR PLANILHA =============
-if all_rows:
-    worksheet.update(values=[headers]+all_rows, range_name="A1")
-    print(f"✅ Aba '{SHEET_NAME}' atualizada com {len(all_rows)} linhas.")
-else:
-    print("⚠️ Nenhuma linha retornada.")
+# ============ ATUALIZAR AMBAS PLANILHAS ============
+for sheet_id in SPREADSHEET_IDS:
+    update_sheet(sheet_id, all_rows)
 
-# ============ FORMATAR COLUNA A COMO DATA yyyy-MM-dd =============
-from googleapiclient.discovery import build
-
-def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
-    service = build('sheets', 'v4', credentials=credentials)
-    metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    sheet_id = None
-    for s in metadata['sheets']:
-        print(f"Sheet encontrado: '{s['properties']['title']}' id={s['properties']['sheetId']}")
-        if s['properties']['title'] == sheet_name:
-            sheet_id = s['properties']['sheetId']
-    if sheet_id is None:
-        print(f'❌ Não achou a aba "{sheet_name}"!')
-        return
-    body = {
-        "requests": [
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": sheet_id,
-                        "startRowIndex": 1,  # pula cabeçalho; se quiser formatar o header também, use 0
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 1
-                    },
-                    "cell": {
-                        "userEnteredFormat": {
-                            "numberFormat": {
-                                "type": "DATE",
-                                "pattern": "yyyy-MM-dd"
-                            }
-                        }
-                    },
-                    "fields": "userEnteredFormat.numberFormat"
-                }
-            }
-        ]
-    }
-    service.spreadsheets().batchUpdate(
-        spreadsheetId=spreadsheet_id,
-        body=body
-    ).execute()
-    print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
-
-try:
-    format_col_A_as_date(SPREADSHEET_ID, SHEET_NAME, google_creds)
-except Exception as e:
-    print(f"⚠️ Erro formatando coluna A como data: {e}")
-
-# ============ FIM DO TIMER =============
+# ============ FIM DO TIMER ============
 elapsed_time = time.time() - start_time
 minutes, seconds = divmod(elapsed_time, 60)
 print(f"⏱ Tempo total: {int(minutes)}m {seconds:.2f}s")
