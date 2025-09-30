@@ -63,7 +63,8 @@ try:
     raw_val = dashboard_ws.acell("D6").value
     if raw_val in [None, ""]:
         raise ValueError("Célula D6 vazia")
-    cleaned_val = str(raw_val).replace(",", ".").strip()
+    # Remove R$, espaços e troca vírgula por ponto
+    cleaned_val = str(raw_val).replace("R$", "").replace(" ", "").replace(",", ".")
     EXCHANGE_RATE = float(cleaned_val)
 except Exception as e:
     print(f"⚠️ Erro ao pegar câmbio ({e}), fallback = 5.35")
@@ -128,6 +129,10 @@ for d in DOMAINS:
         continue
 
     for row in data:
+        site_name = row.get("Dimension.SITE_NAME", "")
+        if site_name not in ["finantict.com", "dissemedisse.com", "us.oportalideal.com"]:
+            continue  # filtra apenas os sites desejados
+
         channel = row.get("Dimension.CHANNEL_NAME", "")
         if not channel:
             continue
@@ -145,7 +150,7 @@ for d in DOMAINS:
                 hour_fmt = str(int(hour_raw)) if hour_raw not in [None, ""] else "0"
 
                 all_rows.append([
-                    row.get("Dimension.SITE_NAME", ""),
+                    site_name,
                     date_fmt,
                     hour_fmt,
                     channel,
