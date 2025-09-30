@@ -5,26 +5,38 @@ import time
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time as dt_time
 import pytz
 
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
-SPREADSHEET_ID = "1DqC7bNOxljeZ5xze35p-PnsfmQSdZecZOtZp1FP-yh0"
+SPREADSHEET_ID = "1DqC7bNOxljeZ5xze35p-PnsfmQSdZecZOtZp1FP-yh0"  # troque pelo ID correto
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-# Data (últimos 7 dias incluindo hoje)
+# ============ FUNÇÕES AUXILIARES ============
+def safe_float(v, default=0.0):
+    try:
+        return float(str(v).replace(",", "."))
+    except (TypeError, ValueError):
+        return default
+
+def safe_int(v, default=0):
+    try:
+        return int(float(str(v).replace(",", ".")))
+    except (TypeError, ValueError):
+        return default
+
+# ============ DATA (últimos 7 dias incluindo hoje) ============
 fuso_br = pytz.timezone("America/Sao_Paulo")
 today = datetime.now(fuso_br)
 inicio = today - timedelta(days=6)
-
 DATE_START = inicio.strftime("%Y-%m-%d")
 DATE_END = today.strftime("%Y-%m-%d")
 
-# Domínios
+# ============ DOMÍNIOS ============
 DOMAINS = [
     {"domain": "dissemedisse.com", "networkCode": "21962277692", "currency": "USD"},
     {"domain": "finantict.com", "networkCode": "12219877", "currency": "BRL"},
@@ -48,8 +60,7 @@ except Exception as e:
 
 # Taxa de câmbio
 try:
-    dashboard_ws = sheet.worksheet("A - GRID US CC - Total (G)")
-    EXCHANGE_RATE = float(str(dashboard_ws.acell("D6").value).replace(",", "."))
+    EXCHANGE_RATE = safe_float(dashboard_ws.acell("D6").value, default=5.35)
 except Exception as e:
     print(f"⚠️ Erro ao pegar câmbio ({e}), fallback = 5.35")
     EXCHANGE_RATE = 5.35
@@ -97,7 +108,7 @@ for d in DOMAINS:
         "end_date": DATE_END,
         "domain": d["domain"],
         "networkCode": d["networkCode"],
-        "site_name": d["domain"],  # 👈 agora usa o domínio atual, não fixo
+        "site_name": "finantict.com,dissemedisse.com,us.oportalideal.com",
     }
     headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
 
@@ -105,61 +116,45 @@ for d in DOMAINS:
         resp = requests.post(API_URL, json=payload, headers=headers_req)
         resp.raise_for_status()
         data = resp.json()
-
-        # Debug: mostrar como a API respondeu
-        print(f"\n📡 Resposta do domínio {d['domain']} (primeiros 500 chars):")
-        print(json.dumps(data, indent=2)[:500])
-
     except Exception as e:
         print(f"❌ Erro no domínio {d['domain']}: {e}")
         continue
 
-    # Conferir se realmente veio lista
     if not isinstance(data, list):
-        print(f"⚠️ Resposta não é lista para {d['domain']}: {type(data)}")
         continue
 
     for row in data:
-        try:
-            channel = row.get("Dimension.CHANNEL_NAME", "")
+        channel = row.get("Dimension.CHANNEL_NAME", "")
+        if not channel:
+            continue
 
-            revenue = float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0))
-            # só dividir se o valor vier em micros
-            if revenue > 1000:
-                revenue /= 1_000_000
+        if any(kw in channel for kw in ["utm_source=google", "utm_source=queda", "utm_medium="]):
+            try:
+                revenue = safe_float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
+                if d["currency"] == "BRL":
+                    revenue /= EXCHANGE_RATE
 
-            if d["currency"] == "BRL":
-                revenue /= EXCHANGE_RATE
+                # Data e hora
+                date_raw = row.get("Dimension.DATE", "")
+                hour_raw = row.get("Dimension.HOUR", "0")
 
-            # datas e horas
-            data_raw = row.get("Dimension.DATE", "")
-            hora_raw = row.get("Dimension.HOUR", "0")
+                date_fmt = datetime.strptime(date_raw, "%Y-%m-%d").date() if date_raw else ""
+                hour_fmt = dt_time(int(hour_raw)) if hour_raw.isdigit() else ""
 
-            data_fmt = (
-                datetime.strptime(data_raw, "%Y-%m-%d").date() if data_raw else ""
-            )
-            hora_fmt = (
-                datetime.strptime(hora_raw, "%H").time()
-                if hora_raw.isdigit()
-                else ""
-            )
-
-            all_rows.append(
-                [
+                all_rows.append([
                     row.get("Dimension.SITE_NAME", ""),
-                    data_fmt,
-                    hora_fmt,
+                    date_fmt,
+                    hour_fmt,
                     channel,
-                    revenue,
+                    round(revenue, 2),
                     row.get("Dimension.COUNTRY_NAME", ""),
                     row.get("Dimension.URL_NAME", ""),
                     row.get("Dimension.AD_UNIT_NAME", ""),
-                    int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0)),
-                    int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS", 0)),
-                ]
-            )
-        except Exception as e:
-            print(f"⚠️ Erro processando linha do domínio {d['domain']}: {e}")
+                    safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0)),
+                    safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS", 0)),
+                ])
+            except Exception as e:
+                print(f"⚠️ Erro processando linha do domínio {d['domain']}: {e}")
 
 # ============ ATUALIZAR PLANILHA ============
 if len(all_rows) > 1:
