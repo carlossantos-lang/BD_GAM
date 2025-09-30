@@ -27,7 +27,21 @@ today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
 
 DOMAINS = [
-    # ... seus domínios, igual ao seu código anterior ...
+    {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
+    {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
+    {"domain": "de8.com.br", "networkCode": "22705810042", "currency": "USD"},
+    {"domain": "rendademae.com", "networkCode": "22883124850", "currency": "USD"},
+    {"domain": "creativepulse23.com", "networkCode": "23144189085", "currency": "USD"},
+    {"domain": "agoranamidia.com", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "guiabancario.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "caxiason.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "meucartaoideal.com", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "thecredito.com.br", "networkCode": "21655197668", "currency": "BRL"},
+    {"domain": "meucreditoagora.com", "networkCode": "21761578357", "currency": "BRL"},
+    {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
+    {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
+    {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
+    {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
 ]
 
 # ============ FUNÇÕES AUXILIARES ============
@@ -98,7 +112,7 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
 
 # ============ FUNÇÃO PARA ATUALIZAR PLANILHA EM CHUNKS ============
-def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):  # ajustado para 10.000
+def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
     sheet = gc.open_by_key(spreadsheet_id)
 
     try:
@@ -108,17 +122,21 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):  # ajustado para 1
         worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="10000", cols="20")
 
     headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-    worksheet.update("A1:J1", [headers])
+    worksheet.update(range_name="A1:J1", values=[headers])
 
     for i in range(0, len(all_rows), chunk_size):
         chunk = all_rows[i:i+chunk_size]
         start_row = i + 2
         end_row = start_row + len(chunk) - 1
         range_str = f"A{start_row}:J{end_row}"
-        worksheet.update(range_str, chunk)
+        worksheet.update(range_name=range_str, values=chunk)
         print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
 
-    format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+    # Protegido para não travar seu script (timeout, etc)
+    try:
+        format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+    except Exception as e:
+        print(f"⚠️ Erro ao formatar a coluna A como data: {e}")
 
 # ============ PEGAR COTAÇÃO SÓ UMA VEZ ============
 EXCHANGE_RATE = get_exchange_rate()
@@ -163,7 +181,7 @@ for d in DOMAINS:
 
             # Converter BRL → USD, se necessário
             if d["currency"] == "BRL":
-                revenue /= EXCHANGE_RATE  # usa a cotação única lida anteriormente
+                revenue /= EXCHANGE_RATE
                 ecpm /= EXCHANGE_RATE
 
             all_rows.append([
