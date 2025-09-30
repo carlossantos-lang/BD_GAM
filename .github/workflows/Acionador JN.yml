@@ -1,4 +1,4 @@
-name: Rodar script Python a cada hora
+name: Acionador JN
 
 # Executa a cada hora, e também permite disparo manual
 on:
