@@ -22,21 +22,21 @@ today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
 
 DOMAINS = [
-    {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
-    {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
-    {"domain": "de8.com.br", "networkCode": "22705810042", "currency": "USD"},
-    {"domain": "rendademae.com", "networkCode": "22883124850", "currency": "USD"},
-    {"domain": "creativepulse23.com", "networkCode": "23144189085", "currency": "USD"},
-    {"domain": "agoranamidia.com", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "guiabancario.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "caxiason.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "meucartaoideal.com", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "thecredito.com.br", "networkCode": "21655197668", "currency": "BRL"},
-    {"domain": "meucreditoagora.com", "networkCode": "21761578357", "currency": "BRL"},
-    {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
-    {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
-    {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
-    {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
+   [
+    {domain: "thecredito.com.br", networkCode: "21655197668", currency: "BRL"},
+    {domain: "meucartaoideal.com", networkCode: "21655197668", currency: "BRL"},
+    {domain: "caxiason.com.br", networkCode: "21655197668", currency: "BRL"},
+    {domain: "guiabancario.com.br", networkCode: "21655197668", currency: "BRL"},
+    {domain: "agoranamidia.com", networkCode: "21655197668", currency: "BRL"},
+    {domain: "coinvistu.com", networkCode: "23279186968", currency: "USD"},
+    {domain: "creativepulse23.com", networkCode: "23144189085", currency: "USD"},
+    {domain: "genialcredito.com", networkCode: "21938760094", currency: "BRL"},
+    {domain: "usfinancemore.com", networkCode: "23158280633", currency: "BRL"},
+    {domain: "de8.com.br", networkCode: "22705810042", currency: "USD"},
+    {domain: "meucreditoagora.com", networkCode: "21761578357", currency: "BRL"},
+    {domain: "netdinheiro.com.br", networkCode: "21629126805", currency: "BRL"},
+    {domain: "rendademae.com", networkCode: "22883124850", currency: "USD"},
+    {domain: "zienic.com", networkCode: "22407091784", currency: "USD"}
 ]
 
 # ============ FUNÇÕES AUXILIARES =============
