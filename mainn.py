@@ -15,6 +15,7 @@ start_time = time.time()
 SPREADSHEET_IDS = [
     "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
     "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc"
+    "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q"
 ]
 EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"  # Planilha onde buscará a cotação
 SHEET_NAME = "BD - GAM"
