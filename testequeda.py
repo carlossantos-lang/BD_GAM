@@ -5,7 +5,7 @@ import time
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, timedelta, time as dt_time
+from datetime import datetime, timedelta
 import pytz
 
 start_time = time.time()
@@ -134,12 +134,12 @@ for d in DOMAINS:
                 if d["currency"] == "BRL":
                     revenue /= EXCHANGE_RATE
 
-                # Data e hora
+                # Converter datas e horas para string
                 date_raw = row.get("Dimension.DATE", "")
                 hour_raw = row.get("Dimension.HOUR", "0")
 
-                date_fmt = datetime.strptime(date_raw, "%Y-%m-%d").date() if date_raw else ""
-                hour_fmt = dt_time(int(hour_raw)) if hour_raw.isdigit() else ""
+                date_fmt = date_raw  # 'YYYY-MM-DD'
+                hour_fmt = f"{int(hour_raw):02d}:00" if hour_raw.isdigit() else "00:00"
 
                 all_rows.append([
                     row.get("Dimension.SITE_NAME", ""),
