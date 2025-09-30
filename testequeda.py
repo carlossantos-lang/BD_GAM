@@ -11,7 +11,7 @@ import pytz
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
-SPREADSHEET_ID = "1DqC7bNOxljeZ5xze35p-PnsfmQSdZecZOtZp1FP-yh0"  # troque pelo ID correto
+SPREADSHEET_ID = "1DqC7bNOxljeZ5xze35p-PnsfmQSdZecZOtZp1FP-yh0"
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
@@ -46,7 +46,7 @@ try:
 except Exception as e:
     print(f"⚠️ Erro ao atualizar célula I3: {e}")
 
-# Taxa de câmbio (pegando da aba "A - GRID US CC - Total (G)", célula D6)
+# Taxa de câmbio
 try:
     dashboard_ws = sheet.worksheet("A - GRID US CC - Total (G)")
     EXCHANGE_RATE = float(str(dashboard_ws.acell("D6").value).replace(",", "."))
@@ -97,7 +97,7 @@ for d in DOMAINS:
         "end_date": DATE_END,
         "domain": d["domain"],
         "networkCode": d["networkCode"],
-        "site_name": "finantict.com,dissemedisse.com,us.oportalideal.com",
+        "site_name": d["domain"],  # 👈 agora usa o domínio atual, não fixo
     }
     headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
 
@@ -105,50 +105,61 @@ for d in DOMAINS:
         resp = requests.post(API_URL, json=payload, headers=headers_req)
         resp.raise_for_status()
         data = resp.json()
+
+        # Debug: mostrar como a API respondeu
+        print(f"\n📡 Resposta do domínio {d['domain']} (primeiros 500 chars):")
+        print(json.dumps(data, indent=2)[:500])
+
     except Exception as e:
         print(f"❌ Erro no domínio {d['domain']}: {e}")
         continue
 
+    # Conferir se realmente veio lista
     if not isinstance(data, list):
+        print(f"⚠️ Resposta não é lista para {d['domain']}: {type(data)}")
         continue
 
     for row in data:
-        channel = row.get("Dimension.CHANNEL_NAME", "")
-        if not channel:
-            continue
+        try:
+            channel = row.get("Dimension.CHANNEL_NAME", "")
 
-        if any(
-            kw in channel
-            for kw in ["utm_source=google", "utm_source=queda", "utm_medium="]
-        ):
-            try:
-                revenue = float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
-                if d["currency"] == "BRL":
-                    revenue /= EXCHANGE_RATE
+            revenue = float(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0))
+            # só dividir se o valor vier em micros
+            if revenue > 1000:
+                revenue /= 1_000_000
 
-                # tratar tipos corretamente
-                data_raw = row.get("Dimension.DATE", "")  # "2025-09-30"
-                hora_raw = row.get("Dimension.HOUR", "0") # "14"
+            if d["currency"] == "BRL":
+                revenue /= EXCHANGE_RATE
 
-                data_fmt = datetime.strptime(data_raw, "%Y-%m-%d").date() if data_raw else ""
-                hora_fmt = datetime.time(int(hora_raw)) if hora_raw.isdigit() else ""
+            # datas e horas
+            data_raw = row.get("Dimension.DATE", "")
+            hora_raw = row.get("Dimension.HOUR", "0")
 
-                all_rows.append(
-                    [
-                        row.get("Dimension.SITE_NAME", ""),
-                        data_fmt,
-                        hora_fmt,
-                        channel,
-                        revenue,  # float, sem formatação
-                        row.get("Dimension.COUNTRY_NAME", ""),
-                        row.get("Dimension.URL_NAME", ""),
-                        row.get("Dimension.AD_UNIT_NAME", ""),
-                        int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0)),
-                        int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS", 0)),
-                    ]
-                )
-            except Exception as e:
-                print(f"⚠️ Erro processando linha do domínio {d['domain']}: {e}")
+            data_fmt = (
+                datetime.strptime(data_raw, "%Y-%m-%d").date() if data_raw else ""
+            )
+            hora_fmt = (
+                datetime.strptime(hora_raw, "%H").time()
+                if hora_raw.isdigit()
+                else ""
+            )
+
+            all_rows.append(
+                [
+                    row.get("Dimension.SITE_NAME", ""),
+                    data_fmt,
+                    hora_fmt,
+                    channel,
+                    revenue,
+                    row.get("Dimension.COUNTRY_NAME", ""),
+                    row.get("Dimension.URL_NAME", ""),
+                    row.get("Dimension.AD_UNIT_NAME", ""),
+                    int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0)),
+                    int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS", 0)),
+                ]
+            )
+        except Exception as e:
+            print(f"⚠️ Erro processando linha do domínio {d['domain']}: {e}")
 
 # ============ ATUALIZAR PLANILHA ============
 if len(all_rows) > 1:
