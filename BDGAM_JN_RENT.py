@@ -11,7 +11,7 @@ import pytz
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES =============
-SPREADSHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
+SPREADSHEET_ID = "1n1WMWBkMtHA9SdQpveC8Ch7nUCCmBHnHySTqN-eY7PE"
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
@@ -69,8 +69,8 @@ gc = gspread.authorize(credentials)
 sheet = gc.open_by_key(SPREADSHEET_ID)
 
 # ============ PEGAR COTAÇÃO DO DÓLAR =============
-dollar_sheet_name = "JN_US_CC"
-dollar_cell = "O2"
+dollar_sheet_name = "info"
+dollar_cell = "B1:C1"
 try:
     dollar_ws = sheet.worksheet(dollar_sheet_name)
     EXCHANGE_RATE = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
