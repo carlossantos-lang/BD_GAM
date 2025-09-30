@@ -68,15 +68,26 @@ gc = gspread.authorize(credentials)
 sheet = gc.open_by_key(SPREADSHEET_ID)
 
 # ============ PEGAR COTAÇÃO DO DÓLAR =============
-dollar_sheet_name = "info"
-dollar_cell = "B1:C1"
+# ============ PEGAR COTAÇÃO DO DÓLAR =============
 try:
-    dollar_ws = sheet.worksheet(dollar_sheet_name)
-    EXCHANGE_RATE = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
-    print(f"💵 Taxa de câmbio obtida: 1 USD = {EXCHANGE_RATE} BRL")
+    # Define a aba "info" onde o dólar está
+    dashboard_ws = sheet.worksheet("info")
+
+    # Pega o valor nas células B1:C1 (ajuste conforme a célula correta)
+    values = dashboard_ws.get("B1:C1")  # retorna lista de listas
+
+    if not values or not values[0]:
+        raise ValueError("Células B1:C1 estão vazias")
+
+    raw_val = values[0][-1]  # pega último valor da faixa
+    # Remove R$, espaços e troca vírgula por ponto
+    cleaned_val = str(raw_val).replace("R$", "").replace(" ", "").replace(",", ".")
+    EXCHANGE_RATE = float(cleaned_val)
+    print(f"💵 Câmbio obtido: {EXCHANGE_RATE}")
+
 except Exception as e:
+    print(f"⚠️ Erro ao pegar câmbio ({e}), fallback = 5.35")
     EXCHANGE_RATE = 5.35
-    print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: {EXCHANGE_RATE} BRL")
 
 # ============ PREPARAR ABA PRINCIPAL =============
 try:
