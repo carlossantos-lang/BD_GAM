@@ -58,11 +58,12 @@ try:
 except Exception as e:
     print(f"⚠️ Erro ao atualizar célula I3: {e}")
 
-# Taxa de câmbio
+# Taxa de câmbio (D6:E6)
 try:
-    raw_val = dashboard_ws.acell("D6").value
-    if raw_val in [None, ""]:
-        raise ValueError("Célula D6 vazia")
+    values = dashboard_ws.get("D6:E6")  # retorna lista de listas
+    if not values or not values[0]:
+        raise ValueError("Células D6:E6 estão vazias")
+    raw_val = values[0][-1]  # pega último valor da faixa (E6 se existir, senão D6)
     # Remove R$, espaços e troca vírgula por ponto
     cleaned_val = str(raw_val).replace("R$", "").replace(" ", "").replace(",", ".")
     EXCHANGE_RATE = float(cleaned_val)
@@ -146,7 +147,6 @@ for d in DOMAINS:
                 # Converter datas e horas
                 date_fmt = row.get("Dimension.DATE", "")
                 hour_raw = row.get("Dimension.HOUR", 0)
-                # Forçar como string para evitar formato hora no Sheets
                 hour_fmt = str(int(hour_raw)) if hour_raw not in [None, ""] else "0"
 
                 all_rows.append([
