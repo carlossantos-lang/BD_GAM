@@ -139,7 +139,7 @@ for d in DOMAINS:
                 hour_raw = row.get("Dimension.HOUR", "0")
 
                 date_fmt = date_raw  # 'YYYY-MM-DD'
-                hour_fmt = f"{int(hour_raw):02d}:00" if hour_raw.isdigit() else "00:00"
+                hour_fmt = safe_int(hour_raw)
 
                 all_rows.append([
                     row.get("Dimension.SITE_NAME", ""),
