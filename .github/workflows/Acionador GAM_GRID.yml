@@ -1,4 +1,4 @@
-name: testequedaxx
+name: Acionador GAM_GRID
 
 # Executa a cada hora e permite disparo manual
 on:
