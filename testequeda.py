@@ -60,7 +60,11 @@ except Exception as e:
 
 # Taxa de câmbio
 try:
-    EXCHANGE_RATE = safe_float(dashboard_ws.acell("D6").value, default=5.35)
+    raw_val = dashboard_ws.acell("D6").value
+    if raw_val in [None, ""]:
+        raise ValueError("Célula D6 vazia")
+    cleaned_val = str(raw_val).replace(",", ".").strip()
+    EXCHANGE_RATE = float(cleaned_val)
 except Exception as e:
     print(f"⚠️ Erro ao pegar câmbio ({e}), fallback = 5.35")
     EXCHANGE_RATE = 5.35
