@@ -134,12 +134,10 @@ for d in DOMAINS:
                 if d["currency"] == "BRL":
                     revenue /= EXCHANGE_RATE
 
-                # Converter datas e horas para string
-                date_raw = row.get("Dimension.DATE", "")
-                hour_raw = row.get("Dimension.HOUR", "0")
-
-                date_fmt = date_raw  # 'YYYY-MM-DD'
-                hour_fmt = safe_int(hour_raw)
+                # Converter datas e horas
+                date_fmt = row.get("Dimension.DATE", "")
+                hour_raw = row.get("Dimension.HOUR", 0)
+                hour_fmt = int(hour_raw) if hour_raw not in [None, ""] else 0
 
                 all_rows.append([
                     row.get("Dimension.SITE_NAME", ""),
