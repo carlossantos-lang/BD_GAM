@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 
 start_time = time.time()
 
-# ============ CONFIGURAÇÕES =============
+# ============ CONFIGURAÇÕES ============
 SPREADSHEET_IDS = [
     "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
     "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc"
@@ -43,7 +43,7 @@ DOMAINS = [
     {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
 ]
 
-# ============ FUNÇÕES AUXILIARES =============
+# ============ FUNÇÕES AUXILIARES ============
 def safe_float(v, default=0.0):
     try:
         return float(str(v).replace(",", "."))
@@ -62,14 +62,14 @@ def date_to_gsheet_serial(date_str):
     delta = dt - base
     return float(delta.days)
 
-# ============ CONEXÃO GOOGLE SHEETS =============
+# ============ CONEXÃO GOOGLE SHEETS ============
 creds_json = os.environ['GCP_CREDENTIALS']
 google_creds = json.loads(creds_json)
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 credentials = Credentials.from_service_account_info(google_creds, scopes=scopes)
 gc = gspread.authorize(credentials)
 
-# ============ PEGAR COTAÇÃO DO DÓLAR =============
+# ============ PEGAR COTAÇÃO DO DÓLAR ============
 def get_exchange_rate(sheet):
     dollar_sheet_name = "JN_US_CC"
     dollar_cell = "O2"
@@ -82,24 +82,7 @@ def get_exchange_rate(sheet):
         print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: 5.35 BRL")
         return 5.35
 
-# ============ FUNÇÃO PARA ATUALIZAR PLANILHA ============
-def update_sheet(spreadsheet_id, all_rows):
-    sheet = gc.open_by_key(spreadsheet_id)
-    EXCHANGE_RATE = get_exchange_rate(sheet)
-
-    try:
-        worksheet = sheet.worksheet(SHEET_NAME)
-        worksheet.clear()
-    except gspread.WorksheetNotFound:
-        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="1000", cols="20")
-
-    headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-    worksheet.update(values=[headers]+all_rows, range_name="A1")
-    print(f"✅ Aba '{SHEET_NAME}' da planilha {spreadsheet_id} atualizada com {len(all_rows)} linhas.")
-
-    # Formatar coluna A como data
-    format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
-
+# ============ FORMATAÇÃO DE COLUNA ============
 def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
     service = build('sheets', 'v4', credentials=credentials)
@@ -126,6 +109,30 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
     print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
 
+# ============ FUNÇÃO PARA ATUALIZAR PLANILHA EM CHUNKS ============
+def update_sheet(spreadsheet_id, all_rows, chunk_size=500):
+    sheet = gc.open_by_key(spreadsheet_id)
+    EXCHANGE_RATE = get_exchange_rate(sheet)
+
+    try:
+        worksheet = sheet.worksheet(SHEET_NAME)
+        worksheet.clear()
+    except gspread.WorksheetNotFound:
+        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="1000", cols="20")
+
+    headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+    worksheet.update("A1:J1", [headers])
+
+    for i in range(0, len(all_rows), chunk_size):
+        chunk = all_rows[i:i+chunk_size]
+        start_row = i + 2
+        end_row = start_row + len(chunk) - 1
+        range_str = f"A{start_row}:J{end_row}"
+        worksheet.update(range_str, chunk)
+        print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
+
+    format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+
 # ============ BUSCAR DADOS DA API ============
 all_rows = []
 for d in DOMAINS:
@@ -137,12 +144,12 @@ for d in DOMAINS:
         "domain": d["domain"],
         "networkCode": d["networkCode"],
         "site_name": "",
-        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=spush"
+        "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=broadcast,utm_source=newsletter"
     }
     headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}
 
     try:
-        resp = requests.post(API_URL, json=payload, headers=headers_req)
+        resp = requests.post(API_URL, json=payload, headers=headers_req, timeout=120)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -166,7 +173,7 @@ for d in DOMAINS:
 
             # Converter BRL → USD, se necessário
             if d["currency"] == "BRL":
-                revenue /= 5.35  # valor padrão antes de pegar da planilha
+                revenue /= 5.35
                 ecpm /= 5.35
 
             all_rows.append([
