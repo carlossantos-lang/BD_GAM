@@ -13,8 +13,7 @@ start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
 SPREADSHEET_IDS = [
-    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
-    "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc"
+    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 ]
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
