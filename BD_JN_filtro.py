@@ -12,6 +12,21 @@ from googleapiclient.discovery import build
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
+SPREADSHEET_IDS = []  # Não usado mais, usamos PLANILHAS_DOMINIOS abaixo
+EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
+SHEET_NAME = "BD - GAM"
+API_URL = "https://my.spun.com.br/api/admanager/data"
+
+# Use Secrets no GitHub Actions
+API_TOKEN = os.environ.get("SPUN_API_TOKEN")
+GCP_CREDENTIALS_JSON = os.environ.get("GCP_CREDENTIALS")
+
+# Data atual em GMT-3 (Brasília)
+fuso_br = pytz.timezone('America/Sao_Paulo')
+today = datetime.now(fuso_br)
+DATE_STRING = today.strftime('%Y-%m-%d')
+
+# ============ DOMÍNIOS COM MOEDA ============
 DOMAINS = [
     {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
     {"domain": "zienic.com", "networkCode": "22407091784", "currency": "USD"},
@@ -25,21 +40,12 @@ DOMAINS = [
     {"domain": "thecredito.com.br", "networkCode": "21655197668", "currency": "BRL"},
 ]
 
+# ============ PLANILHAS COM FILTRO ============
 PLANILHAS_DOMINIOS = [
     {"spreadsheet_id": "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s", "subdomain_filter": None},  # Planilha 1 pega tudo
     {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
      "subdomain_filter": ["www.caxiason.com.br", "en.rendademae.com", "zienic.com", "us.creativepulse23.com"]}  # Planilha 2 filtra subdomínios
 ]
-
-EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
-SHEET_NAME = "BD - GAM"
-API_URL = "https://my.spun.com.br/api/admanager/data"
-API_TOKEN = os.environ.get("SPUN_API_TOKEN")
-
-# Data atual em GMT-3 (Brasília)
-fuso_br = pytz.timezone('America/Sao_Paulo')
-today = datetime.now(fuso_br)
-DATE_STRING = today.strftime('%Y-%m-%d')
 
 # ============ FUNÇÕES AUXILIARES ============
 def safe_float(v, default=0.0):
@@ -61,8 +67,7 @@ def date_to_gsheet_serial(date_str):
     return float(delta.days)
 
 # ============ CONEXÃO GOOGLE SHEETS ============
-creds_json = os.environ['GCP_CREDENTIALS']
-google_creds = json.loads(creds_json)
+google_creds = json.loads(GCP_CREDENTIALS_JSON)
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 credentials = Credentials.from_service_account_info(google_creds, scopes=scopes)
 gc = gspread.authorize(credentials)
@@ -111,7 +116,6 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
 # ============ FUNÇÃO PARA ATUALIZAR PLANILHA ============
 def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
     sheet = gc.open_by_key(spreadsheet_id)
-
     try:
         worksheet = sheet.worksheet(SHEET_NAME)
         worksheet.clear()
@@ -126,10 +130,8 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
         start_row = i + 2
         end_row = start_row + len(chunk) - 1
         range_str = f"A{start_row}:J{end_row}"
-
         if worksheet.row_count < end_row:
             worksheet.add_rows(end_row - worksheet.row_count)
-
         worksheet.update(range_name=range_str, values=chunk)
         print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
 
@@ -138,7 +140,7 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
     except Exception as e:
         print(f"⚠️ Erro ao formatar a coluna A como data: {e}")
 
-# ============ PEGAR COTAÇÃO SÓ UMA VEZ ============
+# ============ PEGAR COTAÇÃO UMA VEZ ============
 EXCHANGE_RATE = get_exchange_rate()
 
 # ============ BUSCAR DADOS DA API ============
@@ -146,7 +148,8 @@ all_rows = []
 for d in DOMAINS:
     payload = {
         "dimensions": ["DATE","HOUR","SITE_NAME","CHANNEL_NAME","URL_NAME","AD_UNIT_NAME"],
-        "columns": ["AD_EXCHANGE_TOTAL_REQUESTS","AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE","AD_EXCHANGE_MATCH_RATE","AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM"],
+        "columns": ["AD_EXCHANGE_TOTAL_REQUESTS","AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE",
+                    "AD_EXCHANGE_MATCH_RATE","AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM"],
         "start_date": DATE_STRING,
         "end_date": DATE_STRING,
         "domain": d["domain"],
@@ -188,4 +191,31 @@ for d in DOMAINS:
                 safe_int(row.get("Dimension.HOUR",0)),
                 row.get("Dimension.SITE_NAME",""),
                 row.get("Dimension.CHANNEL_NAME",""),
-               
+                row.get("Dimension.URL_NAME",""),
+                row.get("Dimension.AD_UNIT_NAME",""),
+                requests_val,
+                round(revenue,2),
+                0 if match_rate==0 else round(match_rate,4),
+                round(ecpm,2)
+            ])
+        except Exception as e:
+            print(f"⚠️ Erro processando linha: {e}")
+
+# ============ ATUALIZAR PLANILHAS ============
+for planilha in PLANILHAS_DOMINIOS:
+    spreadsheet_id = planilha["spreadsheet_id"]
+    subdomain_filter = planilha.get("subdomain_filter")
+
+    if subdomain_filter:  # Aplica filtro só se houver
+        subdomain_filter_lower = [s.lower() for s in subdomain_filter]
+        rows_to_write = [row for row in all_rows if row[4].lower() in subdomain_filter_lower]  # coluna URL_NAME
+    else:
+        rows_to_write = all_rows
+
+    print(f"🔹 Planilha {spreadsheet_id} receberá {len(rows_to_write)} linhas")
+    update_sheet(spreadsheet_id, rows_to_write)
+
+# ============ FIM DO TIMER ============
+elapsed_time = time.time() - start_time
+minutes, seconds = divmod(elapsed_time, 60)
+print(f"⏱ Tempo total: {int(minutes)}m {seconds:.2f}s")
