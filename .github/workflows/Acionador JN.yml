@@ -3,7 +3,7 @@ name: Acionador JN
 # Executa a cada hora, e também permite disparo manual
 on:
   schedule:
-    - cron: '0 * * * *'  # A cada hora, no minuto 0
+    - cron: '5 * * * *'  # A cada hora, no minuto 0
   workflow_dispatch:
 
 jobs:
