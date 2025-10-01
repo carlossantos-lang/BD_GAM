@@ -12,12 +12,10 @@ from googleapiclient.discovery import build
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
-SPREADSHEET_IDS = []  # Não usado mais, usamos PLANILHAS_DOMINIOS abaixo
-EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 
-# Use Secrets no GitHub Actions
+# Secrets do GitHub Actions
 API_TOKEN = os.environ.get("SPUN_API_TOKEN")
 GCP_CREDENTIALS_JSON = os.environ.get("GCP_CREDENTIALS")
 
@@ -51,13 +49,13 @@ PLANILHAS_DOMINIOS = [
 def safe_float(v, default=0.0):
     try:
         return float(str(v).replace(",", "."))
-    except (TypeError, ValueError):
+    except:
         return default
 
 def safe_int(v, default=0):
     try:
         return int(float(v))
-    except (TypeError, ValueError):
+    except:
         return default
 
 def date_to_gsheet_serial(date_str):
@@ -74,30 +72,27 @@ gc = gspread.authorize(credentials)
 
 # ============ PEGAR COTAÇÃO DO DÓLAR ============
 def get_exchange_rate():
-    dollar_sheet_name = "JN_US_CC"
-    dollar_cell = "O2"
     try:
-        sheet = gc.open_by_key(EXCHANGE_RATE_SHEET_ID)
-        dollar_ws = sheet.worksheet(dollar_sheet_name)
-        rate = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
+        sheet = gc.open_by_key(PLANILHAS_DOMINIOS[0]["spreadsheet_id"])
+        ws = sheet.worksheet("JN_US_CC")
+        rate = safe_float(ws.acell("O2").value, 5.35)
         print(f"💵 Taxa de câmbio obtida: 1 USD = {rate} BRL")
         return rate
-    except Exception as e:
-        print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: 5.35 BRL")
+    except:
+        print("⚠️ Erro ao pegar câmbio. Usando fallback: 5.35 BRL")
         return 5.35
 
 # ============ FORMATAÇÃO DE COLUNA ============
-def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
-    credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
+def format_col_A_as_date(spreadsheet_id):
     service = build('sheets', 'v4', credentials=credentials)
     metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
     sheet_id = None
     for s in metadata['sheets']:
-        if s['properties']['title'] == sheet_name:
+        if s['properties']['title'] == SHEET_NAME:
             sheet_id = s['properties']['sheetId']
             break
     if sheet_id is None:
-        print(f'❌ Não achou a aba "{sheet_name}"!')
+        print(f'❌ Não achou a aba "{SHEET_NAME}"!')
         return
     body = {
         "requests": [
@@ -114,37 +109,32 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
 
 # ============ FUNÇÃO PARA ATUALIZAR PLANILHA ============
-def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
+def update_sheet(spreadsheet_id, all_rows):
     sheet = gc.open_by_key(spreadsheet_id)
     try:
-        worksheet = sheet.worksheet(SHEET_NAME)
-        worksheet.clear()
+        ws = sheet.worksheet(SHEET_NAME)
+        ws.clear()
     except gspread.WorksheetNotFound:
-        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
+        ws = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
 
     headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-    worksheet.update(range_name="A1:J1", values=[headers])
+    ws.update("A1:J1", [headers])
 
-    for i in range(0, len(all_rows), chunk_size):
-        chunk = all_rows[i:i+chunk_size]
-        start_row = i + 2
-        end_row = start_row + len(chunk) - 1
-        range_str = f"A{start_row}:J{end_row}"
-        if worksheet.row_count < end_row:
-            worksheet.add_rows(end_row - worksheet.row_count)
-        worksheet.update(range_name=range_str, values=chunk)
-        print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
+    if not all_rows:
+        print(f"⚠️ Nenhuma linha para atualizar na planilha {spreadsheet_id}")
+        return
 
+    ws.update(f"A2:J{len(all_rows)+1}", all_rows)
+    print(f"✅ Atualizadas {len(all_rows)} linhas na planilha {spreadsheet_id}")
     try:
-        format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+        format_col_A_as_date(spreadsheet_id)
     except Exception as e:
         print(f"⚠️ Erro ao formatar a coluna A como data: {e}")
 
-# ============ PEGAR COTAÇÃO UMA VEZ ============
+# ============ EXECUÇÃO ============
 EXCHANGE_RATE = get_exchange_rate()
-
-# ============ BUSCAR DADOS DA API ============
 all_rows = []
+
 for d in DOMAINS:
     payload = {
         "dimensions": ["DATE","HOUR","SITE_NAME","CHANNEL_NAME","URL_NAME","AD_UNIT_NAME"],
@@ -167,20 +157,14 @@ for d in DOMAINS:
         print(f"❌ Erro no domínio {d['domain']}: {e}")
         continue
 
-    if not isinstance(data, list):
-        continue
-
     for row in data:
         try:
-            data_valor = row.get("Dimension.DATE", "")
-            try:
-                serial = date_to_gsheet_serial(data_valor)
-            except Exception:
-                serial = data_valor
-            revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
-            ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
-            match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
-            requests_val = safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0))
+            date_val = row.get("Dimension.DATE","")
+            serial = date_to_gsheet_serial(date_val) if date_val else ""
+            revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE",0)) / 1_000_000
+            ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM",0)) / 1_000_000
+            match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE",0))
+            requests_val = safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS",0))
 
             if d["currency"] == "BRL":
                 revenue /= EXCHANGE_RATE
@@ -201,21 +185,20 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ ATUALIZAR PLANILHAS ============
+# ============ ATUALIZAR PLANILHAS COM FILTRO DE SUBDOMÍNIO ============
 for planilha in PLANILHAS_DOMINIOS:
     spreadsheet_id = planilha["spreadsheet_id"]
     subdomain_filter = planilha.get("subdomain_filter")
 
-    if subdomain_filter:  # Aplica filtro só se houver
+    if subdomain_filter:
         subdomain_filter_lower = [s.lower() for s in subdomain_filter]
-        rows_to_write = [row for row in all_rows if row[4].lower() in subdomain_filter_lower]  # coluna URL_NAME
+        rows_to_write = [r for r in all_rows if r[4].lower() in subdomain_filter_lower]
     else:
         rows_to_write = all_rows
 
     print(f"🔹 Planilha {spreadsheet_id} receberá {len(rows_to_write)} linhas")
     update_sheet(spreadsheet_id, rows_to_write)
 
-# ============ FIM DO TIMER ============
 elapsed_time = time.time() - start_time
 minutes, seconds = divmod(elapsed_time, 60)
 print(f"⏱ Tempo total: {int(minutes)}m {seconds:.2f}s")
