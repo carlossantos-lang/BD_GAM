@@ -3,7 +3,7 @@ name: Acionador_BD_JN_filtro
 # Executa a cada hora, e também permite disparo manual
 on:
   schedule:
-    - cron: '5 * * * *'  # A cada hora, no minuto 0
+    - cron: '5 * * * *'  # A cada hora, no minuto 5
   workflow_dispatch:
 
 jobs:
@@ -32,8 +32,8 @@ jobs:
         run: echo "${{ secrets.GCP_CREDENTIALS }}" > gcp_creds.json
 
       # 5️⃣ Rodar script Python
-      - name: Rodar script Python
+      - name: Rodar script
+        run: python BD_JN_filtro.py
         env:
+          SPUN_API_TOKEN: ${{ secrets.SPUN_API_TOKEN }}
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-        run: |
-          python BD_JN_filtro.py
