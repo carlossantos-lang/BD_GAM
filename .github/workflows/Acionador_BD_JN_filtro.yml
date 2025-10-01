@@ -1,4 +1,4 @@
-name: Acionador JN
+name: Acionador_BD_JN_filtro
 
 # Executa a cada hora, e também permite disparo manual
 on:
