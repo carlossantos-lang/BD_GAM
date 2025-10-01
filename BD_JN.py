@@ -13,7 +13,7 @@ start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
 SPREADSHEET_IDS = [
-    "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s",
+    "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug",
     "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
     "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q",
     "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ",
