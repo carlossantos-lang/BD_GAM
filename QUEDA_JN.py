@@ -134,7 +134,7 @@ for d in DOMAINS:
 
     for row in data:
         site_name = row.get("Dimension.SITE_NAME", "")
-        if site_name not in ["en.de8.com.br,us.creativepulse23.com,card.caxiason.com.br,us.netdinheiro.com.br,en.genialcredito.com,finance.genialcredito.com,finance.creativepulse23.com,emp.thecredito.com.br"]:
+        if site_name not in ["en.de8.com.br","us.creativepulse23.com","card.caxiason.com.br","us.netdinheiro.com.br","en.genialcredito.com","finance.genialcredito.com","finance.creativepulse23.com","emp.thecredito.com.br"]:
             continue  # filtra apenas os sites desejados
 
         channel = row.get("Dimension.CHANNEL_NAME", "")
