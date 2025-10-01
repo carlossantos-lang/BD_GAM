@@ -146,7 +146,7 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
             worksheet.update(range_name=range_str, values=chunk)
             print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
 
-        format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
+        # format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
 
     except Exception as e:
         print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
