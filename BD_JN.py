@@ -50,7 +50,7 @@ DOMAINS = [
     {"domain": "genialcredito.com", "networkCode": "21938760094", "currency": "BRL"},
     {"domain": "netdinheiro.com.br", "networkCode": "21629126805", "currency": "BRL"},
     {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
-    {"domain": "jobscaxias.com", "networkCode": "23158280633", "currency": "BRL"},
+    {"domain": "mundodasfinancas.com.br", "networkCode": "22969181990", "currency": "USD"},
 ]
 
 # ============ FUNÇÕES AUXILIARES ============
