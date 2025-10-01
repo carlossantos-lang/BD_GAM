@@ -36,4 +36,4 @@ jobs:
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          python mainn.py
+          python BD_JN.py
