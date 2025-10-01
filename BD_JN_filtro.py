@@ -37,7 +37,7 @@ PLANILHAS_DOMINIOS = [
     {"spreadsheet_id": "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"},  # sem filtro, pega tudo
     {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
      "domain": "creativepulse23.com",
-     "subdomain_filter": "www.caxiason.com.br,en.rendademae.com,zienic.com,en.genialcredito.com,us.meucartaoideal.com,en.de8.com.br,en.agoranamidia.com,us.netdinheiro.com.br,us.creativepulse23.com,us.coinvistu.com,thecredito.com.br,finance.meucreditoagora.com,usfinancemore.com,en.mundodasfinancas.com.br"}
+     "subdomain_filter": "www.caxiason.com.br","en.rendademae.com","zienic.com","us.creativepulse23.com"}
 ]
 
 EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
