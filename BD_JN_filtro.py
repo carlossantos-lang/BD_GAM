@@ -192,7 +192,7 @@ for planilha in PLANILHAS_DOMINIOS:
 
     if subdomain_filter:
         subdomain_filter_lower = [s.lower() for s in subdomain_filter]
-        rows_to_write = [r for r in all_rows if r[4].lower() in subdomain_filter_lower]
+        rows_to_write = [r for r in all_rows if r[2].lower() in subdomain_filter_lower]
     else:
         rows_to_write = all_rows
 
