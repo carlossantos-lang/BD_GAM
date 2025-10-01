@@ -93,32 +93,7 @@ def get_exchange_rate():
         print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: 5.35 BRL")
         return 5.35
 
-# ============ FORMATAR COLUNA A ============
-#def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
- #   credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
-  #  service = build('sheets', 'v4', credentials=credentials)
-   # metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    #sheet_id = None
-    #for s in metadata['sheets']:
-     #   if s['properties']['title'] == sheet_name:
-      #      sheet_id = s['properties']['sheetId']
-       #     break
-    #if sheet_id is None:
-       # print(f'❌ Não achou a aba "{sheet_name}"!')
-        #return
-    #body = {
-     #   "requests": [
-        #    {
-           #     "repeatCell": {
-             #       "range": {"sheetId": sheet_id, "startRowIndex": 1, "startColumnIndex": 0, "endColumnIndex": 1},
-              #      "cell": {"userEnteredFormat": {"numberFormat": {"type": "DATE", "pattern": "yyyy-MM-dd"}}},
-                 #   "fields": "userEnteredFormat.numberFormat"
-      #          }
-    #        }
-    #    ]
-   # }
-    #service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-   # print(f"✅ Coluna A formatada como DATA em {spreadsheet_id}.")
+EXCHANGE_RATE = get_exchange_rate()
 
 # ============ ATUALIZAR PLANILHA ============
 def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
@@ -146,13 +121,31 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
             worksheet.update(range_name=range_str, values=chunk)
             print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
 
-        # format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
-
     except Exception as e:
         print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
 
-# ============ PEGAR COTAÇÃO ============
-EXCHANGE_RATE = get_exchange_rate()
+# ============ REGISTRAR DATA/HORA DE EXECUÇÃO ============
+def log_execution_time(spreadsheet_id):
+    try:
+        sheet = gc.open_by_key(spreadsheet_id)
+        now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
+
+        if spreadsheet_id == SPREADSHEET_IDS[0]:
+            try:
+                ws = sheet.worksheet("JN_US_CC")
+            except gspread.WorksheetNotFound:
+                ws = sheet.add_worksheet(title="JN_US_CC", rows="100", cols="10")
+            ws.update("I5:J5", [[now_str, now_str]])
+            print(f"✅ Execução registrada em {spreadsheet_id} -> JN_US_CC!I5:J5")
+        else:
+            try:
+                ws = sheet.worksheet("Dashboard")
+            except gspread.WorksheetNotFound:
+                ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
+            ws.update("B3", now_str)
+            print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
+    except Exception as e:
+        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
 
 # ============ BUSCAR DADOS DA API ============
 all_rows = []
@@ -212,8 +205,11 @@ for d in DOMAINS:
             print(f"⚠️ Erro processando linha: {e}")
 
 # ============ THREADPOOL PARA ATUALIZAR EM PARALELO ============
-with ThreadPoolExecutor(max_workers=5) as executor:  # pode aumentar ou reduzir max_workers
-    futures = [executor.submit(update_sheet, sheet_id, all_rows) for sheet_id in SPREADSHEET_IDS]
+with ThreadPoolExecutor(max_workers=5) as executor:
+    futures = []
+    for sheet_id in SPREADSHEET_IDS:
+        # Atualiza planilha e registra data/hora
+        futures.append(executor.submit(lambda sid: (update_sheet(sid, all_rows), log_execution_time(sid)), sheet_id))
 
     for future in as_completed(futures):
         try:
