@@ -7,7 +7,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pytz
-from googleapiclient.discovery import build
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 start_time = time.time()
@@ -25,7 +24,7 @@ SPREADSHEET_IDS = [
     "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E",
     "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE"
 ]
-EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
+EXCHANGE_RATE_SHEET_ID = SPREADSHEET_IDS[0]
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
@@ -106,7 +105,7 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
             worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
 
         headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-        worksheet.update(range_name="A1:J1", values=[headers])
+        worksheet.update(values=[headers], range_name="A1:J1")
 
         for i in range(0, len(all_rows), chunk_size):
             chunk = all_rows[i:i+chunk_size]
@@ -118,7 +117,7 @@ def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
             if worksheet.row_count < needed_rows:
                 worksheet.add_rows(needed_rows - worksheet.row_count)
 
-            worksheet.update(range_name=range_str, values=chunk)
+            worksheet.update(values=chunk, range_name=range_str)
             print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
 
     except Exception as e:
@@ -135,14 +134,14 @@ def log_execution_time(spreadsheet_id):
                 ws = sheet.worksheet("JN_US_CC")
             except gspread.WorksheetNotFound:
                 ws = sheet.add_worksheet(title="JN_US_CC", rows="100", cols="10")
-            ws.update("I5:J5", [[now_str, now_str]])
+            ws.update(values=[[now_str, now_str]], range_name="I5:J5")
             print(f"✅ Execução registrada em {spreadsheet_id} -> JN_US_CC!I5:J5")
         else:
             try:
                 ws = sheet.worksheet("Dashboard")
             except gspread.WorksheetNotFound:
                 ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
-            ws.update("B3", now_str)
+            ws.update(values=[[now_str]], range_name="B3")
             print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
     except Exception as e:
         print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
@@ -205,12 +204,12 @@ for d in DOMAINS:
             print(f"⚠️ Erro processando linha: {e}")
 
 # ============ THREADPOOL PARA ATUALIZAR EM PARALELO ============
-with ThreadPoolExecutor(max_workers=5) as executor:
-    futures = []
-    for sheet_id in SPREADSHEET_IDS:
-        # Atualiza planilha e registra data/hora
-        futures.append(executor.submit(lambda sid: (update_sheet(sid, all_rows), log_execution_time(sid)), sheet_id))
+def update_and_log(sheet_id):
+    update_sheet(sheet_id, all_rows)
+    log_execution_time(sheet_id)
 
+with ThreadPoolExecutor(max_workers=5) as executor:
+    futures = [executor.submit(update_and_log, sheet_id) for sheet_id in SPREADSHEET_IDS]
     for future in as_completed(futures):
         try:
             future.result()
