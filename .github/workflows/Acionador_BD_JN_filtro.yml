@@ -36,4 +36,4 @@ jobs:
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          python Acionador_BD_JN_filtro.py
+          python BD_JN_filtro.py.py
