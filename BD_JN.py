@@ -94,31 +94,31 @@ def get_exchange_rate():
         return 5.35
 
 # ============ FORMATAR COLUNA A ============
-def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
-    credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
-    service = build('sheets', 'v4', credentials=credentials)
-    metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    sheet_id = None
-    for s in metadata['sheets']:
-        if s['properties']['title'] == sheet_name:
-            sheet_id = s['properties']['sheetId']
-            break
-    if sheet_id is None:
-        print(f'❌ Não achou a aba "{sheet_name}"!')
-        return
-    body = {
-        "requests": [
-            {
-                "repeatCell": {
-                    "range": {"sheetId": sheet_id, "startRowIndex": 1, "startColumnIndex": 0, "endColumnIndex": 1},
-                    "cell": {"userEnteredFormat": {"numberFormat": {"type": "DATE", "pattern": "yyyy-MM-dd"}}},
-                    "fields": "userEnteredFormat.numberFormat"
-                }
-            }
-        ]
-    }
-    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-    print(f"✅ Coluna A formatada como DATA em {spreadsheet_id}.")
+#def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
+ #   credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
+  #  service = build('sheets', 'v4', credentials=credentials)
+   # metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    #sheet_id = None
+    #for s in metadata['sheets']:
+     #   if s['properties']['title'] == sheet_name:
+      #      sheet_id = s['properties']['sheetId']
+       #     break
+    #if sheet_id is None:
+       # print(f'❌ Não achou a aba "{sheet_name}"!')
+        #return
+    #body = {
+     #   "requests": [
+        #    {
+           #     "repeatCell": {
+             #       "range": {"sheetId": sheet_id, "startRowIndex": 1, "startColumnIndex": 0, "endColumnIndex": 1},
+              #      "cell": {"userEnteredFormat": {"numberFormat": {"type": "DATE", "pattern": "yyyy-MM-dd"}}},
+                 #   "fields": "userEnteredFormat.numberFormat"
+      #          }
+    #        }
+    #    ]
+   # }
+    #service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+   # print(f"✅ Coluna A formatada como DATA em {spreadsheet_id}.")
 
 # ============ ATUALIZAR PLANILHA ============
 def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
