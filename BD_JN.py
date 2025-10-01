@@ -8,6 +8,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pytz
 from googleapiclient.discovery import build
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 start_time = time.time()
 
@@ -23,7 +24,6 @@ SPREADSHEET_IDS = [
     "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U",
     "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E",
     "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE"
-    
 ]
 EXCHANGE_RATE_SHEET_ID = "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s"
 SHEET_NAME = "BD - GAM"
@@ -93,7 +93,7 @@ def get_exchange_rate():
         print(f"⚠️ Erro ao pegar câmbio ({e}). Usando fallback: 5.35 BRL")
         return 5.35
 
-# ============ FORMATAÇÃO DE COLUNA ============
+# ============ FORMATAR COLUNA A ============
 def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
     credentials = Credentials.from_service_account_info(creds_json, scopes=scopes)
     service = build('sheets', 'v4', credentials=credentials)
@@ -118,42 +118,40 @@ def format_col_A_as_date(spreadsheet_id, sheet_name, creds_json):
         ]
     }
     service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-    print("✅ Coluna A formatada como DATA yyyy-MM-dd.")
+    print(f"✅ Coluna A formatada como DATA em {spreadsheet_id}.")
 
-# ============ FUNÇÃO PARA ATUALIZAR PLANILHA EM CHUNKS ============
+# ============ ATUALIZAR PLANILHA ============
 def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
-    sheet = gc.open_by_key(spreadsheet_id)
-
-    # Tenta abrir a worksheet, se não existir, cria já com muitas linhas.
     try:
-        worksheet = sheet.worksheet(SHEET_NAME)
-        worksheet.clear()
-    except gspread.WorksheetNotFound:
-        worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
+        sheet = gc.open_by_key(spreadsheet_id)
+        try:
+            worksheet = sheet.worksheet(SHEET_NAME)
+            worksheet.clear()
+        except gspread.WorksheetNotFound:
+            worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
 
-    headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-    worksheet.update(range_name="A1:J1", values=[headers])
+        headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+        worksheet.update(range_name="A1:J1", values=[headers])
 
-    for i in range(0, len(all_rows), chunk_size):
-        chunk = all_rows[i:i+chunk_size]
-        start_row = i + 2
-        end_row = start_row + len(chunk) - 1
-        range_str = f"A{start_row}:J{end_row}"
-        needed_rows = end_row
+        for i in range(0, len(all_rows), chunk_size):
+            chunk = all_rows[i:i+chunk_size]
+            start_row = i + 2
+            end_row = start_row + len(chunk) - 1
+            range_str = f"A{start_row}:J{end_row}"
+            needed_rows = end_row
 
-        # Adiciona linhas se necessário
-        if worksheet.row_count < needed_rows:
-            worksheet.add_rows(needed_rows - worksheet.row_count)
+            if worksheet.row_count < needed_rows:
+                worksheet.add_rows(needed_rows - worksheet.row_count)
 
-        worksheet.update(range_name=range_str, values=chunk)
-        print(f"✅ Atualizadas linhas {start_row}-{end_row} na planilha {spreadsheet_id}")
+            worksheet.update(range_name=range_str, values=chunk)
+            print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
 
-    try:
         format_col_A_as_date(spreadsheet_id, SHEET_NAME, google_creds)
-    except Exception as e:
-        print(f"⚠️ Erro ao formatar a coluna A como data: {e}")
 
-# ============ PEGAR COTAÇÃO SÓ UMA VEZ ============
+    except Exception as e:
+        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
+
+# ============ PEGAR COTAÇÃO ============
 EXCHANGE_RATE = get_exchange_rate()
 
 # ============ BUSCAR DADOS DA API ============
@@ -194,7 +192,6 @@ for d in DOMAINS:
             match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
             requests_val = safe_int(row.get("Column.AD_EXCHANGE_TOTAL_REQUESTS", 0))
 
-            # Converter BRL → USD, se necessário
             if d["currency"] == "BRL":
                 revenue /= EXCHANGE_RATE
                 ecpm /= EXCHANGE_RATE
@@ -214,9 +211,15 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ ATUALIZAR TODAS AS PLANILHAS ============
-for sheet_id in SPREADSHEET_IDS:
-    update_sheet(sheet_id, all_rows)
+# ============ THREADPOOL PARA ATUALIZAR EM PARALELO ============
+with ThreadPoolExecutor(max_workers=5) as executor:  # pode aumentar ou reduzir max_workers
+    futures = [executor.submit(update_sheet, sheet_id, all_rows) for sheet_id in SPREADSHEET_IDS]
+
+    for future in as_completed(futures):
+        try:
+            future.result()
+        except Exception as e:
+            print(f"⚠️ Erro numa thread: {e}")
 
 # ============ FIM DO TIMER ============
 elapsed_time = time.time() - start_time
