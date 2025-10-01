@@ -40,9 +40,9 @@ DOMAINS = [
 
 # ============ PLANILHAS COM FILTRO ============
 PLANILHAS_DOMINIOS = [
-    {"spreadsheet_id": "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s", "subdomain_filter": None},  # Planilha 1 pega tudo
+    {"spreadsheet_id": "1Lh9snLOrHPFs6AynP5pfSmh3uos7ulEOiRNJKKqPs7s", "subdomain_filter": None},  
     {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
-     "subdomain_filter": ["www.caxiason.com.br", "en.rendademae.com", "zienic.com", "us.creativepulse23.com"]}  # Planilha 2 filtra subdomínios
+     "subdomain_filter": ["www.caxiason.com.br", "en.rendademae.com", "zienic.com", "us.creativepulse23.com"]}  
 ]
 
 # ============ FUNÇÕES AUXILIARES ============
@@ -147,7 +147,7 @@ for d in DOMAINS:
         "site_name": "",
         "channel_name": "utm_source=email,utm_source=activecampaign,utm_source=spush"
     }
-    headers_req = {"Authorization": f"Bearer {API_TOKEN}", "Content-Type": "application/json"}
+    headers_req = {"Authorization": API_TOKEN, "Content-Type": "application/json"}  # <--- sem Bearer
 
     try:
         resp = requests.post(API_URL, json=payload, headers=headers_req, timeout=120)
