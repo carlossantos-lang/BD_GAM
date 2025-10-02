@@ -47,7 +47,7 @@ DOMAINS = [
     {"domain": "mundodasfinancas.com.br", "networkCode": "22969181990", "currency": "USD"},
 ]
 
-# Data atual em GMT-3 (Brasília)
+# Fuso horário Brasília
 fuso_br = pytz.timezone('America/Sao_Paulo')
 today = datetime.now(fuso_br)
 DATE_STRING = today.strftime('%Y-%m-%d')
@@ -124,10 +124,7 @@ for d in DOMAINS:
     for row in data:
         try:
             data_valor = row.get("Dimension.DATE", "")
-            try:
-                serial = date_to_gsheet_serial(data_valor)
-            except Exception:
-                serial = data_valor
+            serial = date_to_gsheet_serial(data_valor) if data_valor else data_valor
 
             revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
             ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
@@ -153,13 +150,10 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ FUNÇÃO DE ATUALIZAÇÃO ============
+# ============ FUNÇÃO DE ATUALIZAÇÃO COM LOG IMEDIATO ============
 def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
     try:
-        if subdomain_filter:
-            filtered_rows = [r for r in all_rows if r[2] in subdomain_filter]
-        else:
-            filtered_rows = all_rows
+        filtered_rows = [r for r in all_rows if r[2] in subdomain_filter] if subdomain_filter else all_rows
 
         sheet = gc.open_by_key(spreadsheet_id)
         try:
@@ -175,20 +169,14 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
             chunk = filtered_rows[i:i+chunk_size]
             start_row = i + 2
             end_row = start_row + len(chunk) - 1
-            range_str = f"A{start_row}:J{end_row}"
             if worksheet.row_count < end_row:
                 worksheet.add_rows(end_row - worksheet.row_count)
-            worksheet.update(values=chunk, range_name=range_str)
-            print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
-    except Exception as e:
-        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
+            worksheet.update(values=chunk, range_name=f"A{start_row}:J{end_row}")
 
-# ============ FUNÇÃO DE LOG ============
-def log_execution_time(spreadsheet_id):
-    try:
-        sheet = gc.open_by_key(spreadsheet_id)
+        print(f"✅ {spreadsheet_id} -> Dados atualizados")
+
+        # ============ LOG DE HORA IMEDIATO ============
         now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
-
         if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
             ws_name = "JN_US_CC"
             cell_range = "I5:J5"
@@ -199,16 +187,16 @@ def log_execution_time(spreadsheet_id):
             values = [[now_str]]
 
         try:
-            ws = sheet.worksheet(ws_name)
+            ws_log = sheet.worksheet(ws_name)
         except gspread.WorksheetNotFound:
-            ws = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
+            ws_log = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
+        ws_log.update(values=values, range_name=cell_range)
+        print(f"✅ {spreadsheet_id} -> Hora registrada em {ws_name}!{cell_range} -> {now_str}")
 
-        ws.update(values=values, range_name=cell_range)
-        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range} -> {now_str}")
     except Exception as e:
-        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
+        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
 
-# ============ ATUALIZAÇÃO PARALLELA DAS PLANILHAS ============
+# ============ THREADPOOL ============
 with ThreadPoolExecutor(max_workers=5) as executor:
     futures = [executor.submit(update_sheet, plan["spreadsheet_id"], plan["subdomain_filter"], all_rows) for plan in PLANILHAS_DOMINIOS]
     for future in as_completed(futures):
@@ -216,10 +204,6 @@ with ThreadPoolExecutor(max_workers=5) as executor:
             future.result()
         except Exception as e:
             print(f"⚠️ Erro numa thread: {e}")
-
-# ============ REGISTRO DE HORA (FORA DAS THREADS) ============
-for plan in PLANILHAS_DOMINIOS:
-    log_execution_time(plan["spreadsheet_id"])
 
 # ============ FIM DO TIMER ============
 elapsed_time = time.time() - start_time
