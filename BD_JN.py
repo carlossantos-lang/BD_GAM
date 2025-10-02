@@ -22,13 +22,13 @@ PLANILHAS_DOMINIOS = [
     {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
      "subdomain_filter": ["www.caxiason.com.br", "thecredito.com.br", "en.de8.com.br", "us.meucartaoideal.com", "usfinancemore.com", "en.genialcredito.com", "zienic.com", "us.netdinheiro.com.br", "finance.meucreditoagora.com","en.rendademae.com","us.creativepulse23.com","en.mundodasfinancas.com.br"]},  
     {"spreadsheet_id": "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q", "subdomain_filter": ["finance.caxiason.com.br", "emp.meucreditoagora.com", "emp.thecredito.com.br", "finance.zienic.com", "finance.creativepulse23.com"]},  
-    {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": None},  
-    {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": None},  
-    {"spreadsheet_id": "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8", "subdomain_filter": None},  
-    {"spreadsheet_id": "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio", "subdomain_filter": None},  
-    {"spreadsheet_id": "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U", "subdomain_filter": None},  
-    {"spreadsheet_id": "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E", "subdomain_filter": None},  
-    {"spreadsheet_id": "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE", "subdomain_filter": None},  
+    {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": ["www.genialcredito.com", "www.meucartaoideal.com", "recomendacao.meucartaoideal.com", "rendademae.com", "meucreditoagora.com", "cartao.guiabancario.com.br", "financas.zienic.com", "br.netdinheiro.com.br", "br.creativepulse23.com"]},  
+    {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": ["emprestimo.caxiason.com.br", "emprestimo.genialcredito.com", "emprestimo.meucartaoideal.com", "emprestimo.creativepulse23.com"]},  
+    {"spreadsheet_id": "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8", "subdomain_filter": ["karte.meucartaoideal.com", "karte.de8.com.br", "karte.zienic.com", "de.zienic.com", "karte.agoranamidia.com", "karte.caxiason.com.br", "de.genialcredito.com", "de.creativepulse23.com"]},  
+    {"spreadsheet_id": "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio", "subdomain_filter": ["fr.meucartaoideal.com", "fr.zienic.com", "fr.guiabancario.com.br", "fr.creativepulse23.com"]},  
+    {"spreadsheet_id": "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U", "subdomain_filter": ["uk.zienic.com", "uk.caxiason.com.br", "uk.genialcredito.com", "uk.creativepulse23.com"]},  
+    {"spreadsheet_id": "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E", "subdomain_filter": ["au.zienic.com", "au.caxiason.com.br", "au.genialcredito.com"]},  
+    {"spreadsheet_id": "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE", "subdomain_filter": ["es.agoranamidia.com", "es.caxiason.com.br", "es.creativepulse23.com"]},  
 ]
 
 DOMAINS = [
