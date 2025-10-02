@@ -12,27 +12,24 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 start_time = time.time()
 
 # ============ CONFIGURAÇÕES ============
-SPREADSHEET_IDS = [
-    "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug",
-    "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
-    "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q",
-    "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ",
-    "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so",
-    "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8",
-    "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio",
-    "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U",
-    "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E",
-    "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE"
-]
-EXCHANGE_RATE_SHEET_ID = SPREADSHEET_IDS[0]
 SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-# Data atual em GMT-3 (Brasília)
-fuso_br = pytz.timezone('America/Sao_Paulo')
-today = datetime.now(fuso_br)
-DATE_STRING = today.strftime('%Y-%m-%d')
+# Planilhas com filtro por SITE (coluna)
+PLANILHAS_DOMINIOS = [
+    {"spreadsheet_id": "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug", "subdomain_filter": None},  
+    {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
+     "subdomain_filter": ["www.caxiason.com.br", "en.rendademae.com", "zienic.com", "us.creativepulse23.com"]},  
+    {"spreadsheet_id": "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q", "subdomain_filter": None},  
+    {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": None},  
+    {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": None},  
+    {"spreadsheet_id": "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8", "subdomain_filter": None},  
+    {"spreadsheet_id": "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio", "subdomain_filter": None},  
+    {"spreadsheet_id": "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U", "subdomain_filter": None},  
+    {"spreadsheet_id": "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E", "subdomain_filter": None},  
+    {"spreadsheet_id": "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE", "subdomain_filter": None},  
+]
 
 DOMAINS = [
     {"domain": "financecaxias.com", "networkCode": "23148707119", "currency": "USD"},
@@ -51,6 +48,11 @@ DOMAINS = [
     {"domain": "usfinancemore.com", "networkCode": "23158280633", "currency": "BRL"},
     {"domain": "mundodasfinancas.com.br", "networkCode": "22969181990", "currency": "USD"},
 ]
+
+# Data atual em GMT-3 (Brasília)
+fuso_br = pytz.timezone('America/Sao_Paulo')
+today = datetime.now(fuso_br)
+DATE_STRING = today.strftime('%Y-%m-%d')
 
 # ============ FUNÇÕES AUXILIARES ============
 def safe_float(v, default=0.0):
@@ -80,10 +82,11 @@ gc = gspread.authorize(credentials)
 
 # ============ PEGAR COTAÇÃO DO DÓLAR ============
 def get_exchange_rate():
+    dollar_sheet_id = PLANILHAS_DOMINIOS[0]["spreadsheet_id"]
     dollar_sheet_name = "JN_US_CC"
     dollar_cell = "O2"
     try:
-        sheet = gc.open_by_key(EXCHANGE_RATE_SHEET_ID)
+        sheet = gc.open_by_key(dollar_sheet_id)
         dollar_ws = sheet.worksheet(dollar_sheet_name)
         rate = safe_float(dollar_ws.acell(dollar_cell).value, default=5.35)
         print(f"💵 Taxa de câmbio obtida: 1 USD = {rate} BRL")
@@ -93,58 +96,6 @@ def get_exchange_rate():
         return 5.35
 
 EXCHANGE_RATE = get_exchange_rate()
-
-# ============ ATUALIZAR PLANILHA ============
-def update_sheet(spreadsheet_id, all_rows, chunk_size=10000):
-    try:
-        sheet = gc.open_by_key(spreadsheet_id)
-        try:
-            worksheet = sheet.worksheet(SHEET_NAME)
-            worksheet.clear()
-        except gspread.WorksheetNotFound:
-            worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
-
-        headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
-        worksheet.update(values=[headers], range_name="A1:J1")
-
-        for i in range(0, len(all_rows), chunk_size):
-            chunk = all_rows[i:i+chunk_size]
-            start_row = i + 2
-            end_row = start_row + len(chunk) - 1
-            range_str = f"A{start_row}:J{end_row}"
-            needed_rows = end_row
-
-            if worksheet.row_count < needed_rows:
-                worksheet.add_rows(needed_rows - worksheet.row_count)
-
-            worksheet.update(values=chunk, range_name=range_str)
-            print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
-
-    except Exception as e:
-        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
-
-# ============ REGISTRAR DATA/HORA DE EXECUÇÃO ============
-def log_execution_time(spreadsheet_id):
-    try:
-        sheet = gc.open_by_key(spreadsheet_id)
-        now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
-
-        if spreadsheet_id == SPREADSHEET_IDS[0]:
-            try:
-                ws = sheet.worksheet("JN_US_CC")
-            except gspread.WorksheetNotFound:
-                ws = sheet.add_worksheet(title="JN_US_CC", rows="100", cols="10")
-            ws.update(values=[[now_str, now_str]], range_name="I5:J5")
-            print(f"✅ Execução registrada em {spreadsheet_id} -> JN_US_CC!I5:J5")
-        else:
-            try:
-                ws = sheet.worksheet("Dashboard")
-            except gspread.WorksheetNotFound:
-                ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
-            ws.update(values=[[now_str]], range_name="B3")
-            print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
-    except Exception as e:
-        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
 
 # ============ BUSCAR DADOS DA API ============
 all_rows = []
@@ -179,6 +130,7 @@ for d in DOMAINS:
                 serial = date_to_gsheet_serial(data_valor)
             except Exception:
                 serial = data_valor
+
             revenue = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE", 0)) / 1_000_000
             ecpm = safe_int(row.get("Column.AD_EXCHANGE_LINE_ITEM_LEVEL_AVERAGE_ECPM", 0)) / 1_000_000
             match_rate = safe_float(row.get("Column.AD_EXCHANGE_MATCH_RATE", 0))
@@ -203,13 +155,47 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ THREADPOOL PARA ATUALIZAR EM PARALELO ============
-def update_and_log(sheet_id):
-    update_sheet(sheet_id, all_rows)
-    log_execution_time(sheet_id)
+# ============ ATUALIZAR PLANILHA ============
+def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
+    try:
+        # Aplica filtro pelo SITE se existir
+        if subdomain_filter:
+            filtered_rows = [r for r in all_rows if r[2] in subdomain_filter]  # coluna SITE = índice 2
+        else:
+            filtered_rows = all_rows
+
+        sheet = gc.open_by_key(spreadsheet_id)
+        try:
+            worksheet = sheet.worksheet(SHEET_NAME)
+            worksheet.clear()
+        except gspread.WorksheetNotFound:
+            worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="30000", cols="20")
+
+        headers = ["Date", "Hora", "Site", "Channel Name", "URL", "Ad Unit", "Requests", "Revenue (USD)", "Cobertura", "eCPM"]
+        worksheet.update(values=[headers], range_name="A1:J1")
+
+        for i in range(0, len(filtered_rows), chunk_size):
+            chunk = filtered_rows[i:i+chunk_size]
+            start_row = i + 2
+            end_row = start_row + len(chunk) - 1
+            range_str = f"A{start_row}:J{end_row}"
+            needed_rows = end_row
+
+            if worksheet.row_count < needed_rows:
+                worksheet.add_rows(needed_rows - worksheet.row_count)
+
+            worksheet.update(values=chunk, range_name=range_str)
+            print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
+
+    except Exception as e:
+        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
+
+# ============ THREADPOOL ============
+def update_and_log(plan):
+    update_sheet(plan["spreadsheet_id"], plan["subdomain_filter"], all_rows)
 
 with ThreadPoolExecutor(max_workers=5) as executor:
-    futures = [executor.submit(update_and_log, sheet_id) for sheet_id in SPREADSHEET_IDS]
+    futures = [executor.submit(update_and_log, plan) for plan in PLANILHAS_DOMINIOS]
     for future in as_completed(futures):
         try:
             future.result()
