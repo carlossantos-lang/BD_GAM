@@ -16,18 +16,17 @@ SHEET_NAME = "BD - GAM"
 API_URL = "https://my.spun.com.br/api/admanager/data"
 API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 
-# Planilhas com filtro por SITE (coluna)
 PLANILHAS_DOMINIOS = [
-    {"spreadsheet_id": "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug", "subdomain_filter": None},  
-    {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc", "subdomain_filter": ["www.caxiason.com.br", "thecredito.com.br", "en.de8.com.br", "us.meucartaoideal.com", "usfinancemore.com", "en.genialcredito.com", "zienic.com", "us.netdinheiro.com.br", "finance.meucreditoagora.com","en.rendademae.com","us.creativepulse23.com","en.mundodasfinancas.com.br"]},  
-    {"spreadsheet_id": "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q", "subdomain_filter": ["finance.caxiason.com.br", "emp.meucreditoagora.com", "emp.thecredito.com.br", "finance.zienic.com", "finance.creativepulse23.com"]},  
-    {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": ["www.genialcredito.com", "www.meucartaoideal.com", "recomendacao.meucartaoideal.com", "rendademae.com", "meucreditoagora.com", "cartao.guiabancario.com.br", "financas.zienic.com", "br.netdinheiro.com.br", "br.creativepulse23.com"]},  
-    {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": ["emprestimo.caxiason.com.br", "emprestimo.genialcredito.com", "emprestimo.meucartaoideal.com", "emprestimo.creativepulse23.com"]},  
-    {"spreadsheet_id": "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8", "subdomain_filter": ["karte.meucartaoideal.com", "karte.de8.com.br", "karte.zienic.com", "de.zienic.com", "karte.agoranamidia.com", "karte.caxiason.com.br", "de.genialcredito.com", "de.creativepulse23.com"]},  
-    {"spreadsheet_id": "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio", "subdomain_filter": ["fr.meucartaoideal.com", "fr.zienic.com", "fr.guiabancario.com.br", "fr.creativepulse23.com"]},  
-    {"spreadsheet_id": "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U", "subdomain_filter": ["uk.zienic.com", "uk.caxiason.com.br", "uk.genialcredito.com", "uk.creativepulse23.com"]},  
-    {"spreadsheet_id": "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E", "subdomain_filter": ["au.zienic.com", "au.caxiason.com.br", "au.genialcredito.com"]},  
-    {"spreadsheet_id": "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE", "subdomain_filter": ["es.agoranamidia.com", "es.caxiason.com.br", "es.creativepulse23.com"]},  
+    {"spreadsheet_id": "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug", "subdomain_filter": None},
+    {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc", "subdomain_filter": ["www.caxiason.com.br", "thecredito.com.br", "en.de8.com.br", "us.meucartaoideal.com", "usfinancemore.com", "en.genialcredito.com", "zienic.com", "us.netdinheiro.com.br", "finance.meucreditoagora.com","en.rendademae.com","us.creativepulse23.com","en.mundodasfinancas.com.br"]},
+    {"spreadsheet_id": "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q", "subdomain_filter": ["finance.caxiason.com.br", "emp.meucreditoagora.com", "emp.thecredito.com.br", "finance.zienic.com", "finance.creativepulse23.com"]},
+    {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": ["www.genialcredito.com", "www.meucartaoideal.com", "recomendacao.meucartaoideal.com", "rendademae.com", "meucreditoagora.com", "cartao.guiabancario.com.br", "financas.zienic.com", "br.netdinheiro.com.br", "br.creativepulse23.com"]},
+    {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": ["emprestimo.caxiason.com.br", "emprestimo.genialcredito.com", "emprestimo.meucartaoideal.com", "emprestimo.creativepulse23.com"]},
+    {"spreadsheet_id": "1oSXRda1J_bOe06gcqf52frCX96xQ26fjwRZPmc50Eo8", "subdomain_filter": ["karte.meucartaoideal.com", "karte.de8.com.br", "karte.zienic.com", "de.zienic.com", "karte.agoranamidia.com", "karte.caxiason.com.br", "de.genialcredito.com", "de.creativepulse23.com"]},
+    {"spreadsheet_id": "1AITsQmO0-Scs27hiXrSV1HFz8MtNYRZ89mBqHl58eio", "subdomain_filter": ["fr.meucartaoideal.com", "fr.zienic.com", "fr.guiabancario.com.br", "fr.creativepulse23.com"]},
+    {"spreadsheet_id": "13sa5EwmMZa8wJKaCDf6APNYZOLGKGbhm9sgSUFSn25U", "subdomain_filter": ["uk.zienic.com", "uk.caxiason.com.br", "uk.genialcredito.com", "uk.creativepulse23.com"]},
+    {"spreadsheet_id": "1PBWDN0_zllMoaf0Mwg0BCDpKK27j374NX3Hqla8k1_E", "subdomain_filter": ["au.zienic.com", "au.caxiason.com.br", "au.genialcredito.com"]},
+    {"spreadsheet_id": "1Xs_6Sm8b6iAguZHJsMGiR5RmRlh0RoinWxy8h5-R9fE", "subdomain_filter": ["es.agoranamidia.com", "es.caxiason.com.br", "es.creativepulse23.com"]},
 ]
 
 DOMAINS = [
@@ -154,37 +153,11 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
-# ============ REGISTRAR DATA/HORA DE EXECUÇÃO ============
-def log_execution_time(spreadsheet_id):
-    try:
-        sheet = gc.open_by_key(spreadsheet_id)
-        now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
-        
-        if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
-            ws_name = "JN_US_CC"
-            cell_range = "I5:J5"
-            values = [[now_str, now_str]]
-        else:
-            ws_name = "Dashboard"
-            cell_range = "B3"
-            values = [[now_str]]
-        
-        try:
-            ws = sheet.worksheet(ws_name)
-        except gspread.WorksheetNotFound:
-            ws = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
-        
-        ws.update(values=values, range_name=cell_range)
-        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range} -> {now_str}")
-    except Exception as e:
-        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
-
-# ============ ATUALIZAR PLANILHA ============
+# ============ FUNÇÃO DE ATUALIZAÇÃO ============
 def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
     try:
-        # Aplica filtro pelo SITE se existir
         if subdomain_filter:
-            filtered_rows = [r for r in all_rows if r[2] in subdomain_filter]  # coluna SITE = índice 2
+            filtered_rows = [r for r in all_rows if r[2] in subdomain_filter]
         else:
             filtered_rows = all_rows
 
@@ -203,29 +176,50 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
             start_row = i + 2
             end_row = start_row + len(chunk) - 1
             range_str = f"A{start_row}:J{end_row}"
-            needed_rows = end_row
-
-            if worksheet.row_count < needed_rows:
-                worksheet.add_rows(needed_rows - worksheet.row_count)
-
+            if worksheet.row_count < end_row:
+                worksheet.add_rows(end_row - worksheet.row_count)
             worksheet.update(values=chunk, range_name=range_str)
             print(f"✅ {spreadsheet_id} -> linhas {start_row}-{end_row} atualizadas")
-
     except Exception as e:
         print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
 
-# ============ THREADPOOL ============
-def update_and_log(plan):
-    update_sheet(plan["spreadsheet_id"], plan["subdomain_filter"], all_rows)
-    log_execution_time(plan["spreadsheet_id"]) 
+# ============ FUNÇÃO DE LOG ============
+def log_execution_time(spreadsheet_id):
+    try:
+        sheet = gc.open_by_key(spreadsheet_id)
+        now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
 
+        if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
+            ws_name = "JN_US_CC"
+            cell_range = "I5:J5"
+            values = [[now_str, now_str]]
+        else:
+            ws_name = "Dashboard"
+            cell_range = "B3"
+            values = [[now_str]]
+
+        try:
+            ws = sheet.worksheet(ws_name)
+        except gspread.WorksheetNotFound:
+            ws = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
+
+        ws.update(values=values, range_name=cell_range)
+        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range} -> {now_str}")
+    except Exception as e:
+        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
+
+# ============ ATUALIZAÇÃO PARALLELA DAS PLANILHAS ============
 with ThreadPoolExecutor(max_workers=5) as executor:
-    futures = [executor.submit(update_and_log, plan) for plan in PLANILHAS_DOMINIOS]
+    futures = [executor.submit(update_sheet, plan["spreadsheet_id"], plan["subdomain_filter"], all_rows) for plan in PLANILHAS_DOMINIOS]
     for future in as_completed(futures):
         try:
             future.result()
         except Exception as e:
             print(f"⚠️ Erro numa thread: {e}")
+
+# ============ REGISTRO DE HORA (FORA DAS THREADS) ============
+for plan in PLANILHAS_DOMINIOS:
+    log_execution_time(plan["spreadsheet_id"])
 
 # ============ FIM DO TIMER ============
 elapsed_time = time.time() - start_time
