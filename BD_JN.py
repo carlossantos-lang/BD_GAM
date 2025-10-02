@@ -183,7 +183,7 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
             values = [[now_str, now_str]]
         else:
             ws_name = "Dashboard"
-            cell_range = "B3"
+            cell_range = "C3"
             values = [[now_str]]
 
         try:
