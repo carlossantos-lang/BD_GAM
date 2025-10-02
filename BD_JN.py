@@ -160,7 +160,6 @@ def log_execution_time(spreadsheet_id):
         sheet = gc.open_by_key(spreadsheet_id)
         now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
         
-        # Identificar tipo de planilha (Dashboard ou JN_US_CC)
         if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
             ws_name = "JN_US_CC"
             cell_range = "I5:J5"
@@ -176,7 +175,7 @@ def log_execution_time(spreadsheet_id):
             ws = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
         
         ws.update(values=values, range_name=cell_range)
-        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range}")
+        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range} -> {now_str}")
     except Exception as e:
         print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
 
