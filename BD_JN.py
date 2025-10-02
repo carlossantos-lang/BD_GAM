@@ -159,21 +159,24 @@ def log_execution_time(spreadsheet_id):
     try:
         sheet = gc.open_by_key(spreadsheet_id)
         now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
-
-        if spreadsheet_id == SPREADSHEET_IDS[0]:
-            try:
-                ws = sheet.worksheet("JN_US_CC")
-            except gspread.WorksheetNotFound:
-                ws = sheet.add_worksheet(title="JN_US_CC", rows="100", cols="10")
-            ws.update(values=[[now_str, now_str]], range_name="I5:J5")
-            print(f"✅ Execução registrada em {spreadsheet_id} -> JN_US_CC!I5:J5")
+        
+        # Identificar tipo de planilha (Dashboard ou JN_US_CC)
+        if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
+            ws_name = "JN_US_CC"
+            cell_range = "I5:J5"
+            values = [[now_str, now_str]]
         else:
-            try:
-                ws = sheet.worksheet("Dashboard")
-            except gspread.WorksheetNotFound:
-                ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
-            ws.update(values=[[now_str]], range_name="B3")
-            print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
+            ws_name = "Dashboard"
+            cell_range = "B3"
+            values = [[now_str]]
+        
+        try:
+            ws = sheet.worksheet(ws_name)
+        except gspread.WorksheetNotFound:
+            ws = sheet.add_worksheet(title=ws_name, rows="100", cols="10")
+        
+        ws.update(values=values, range_name=cell_range)
+        print(f"✅ Execução registrada em {spreadsheet_id} -> {ws_name}!{cell_range}")
     except Exception as e:
         print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
 
