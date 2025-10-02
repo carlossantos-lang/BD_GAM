@@ -154,6 +154,29 @@ for d in DOMAINS:
         except Exception as e:
             print(f"⚠️ Erro processando linha: {e}")
 
+# ============ REGISTRAR DATA/HORA DE EXECUÇÃO ============
+def log_execution_time(spreadsheet_id):
+    try:
+        sheet = gc.open_by_key(spreadsheet_id)
+        now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
+
+        if spreadsheet_id == SPREADSHEET_IDS[0]:
+            try:
+                ws = sheet.worksheet("JN_US_CC")
+            except gspread.WorksheetNotFound:
+                ws = sheet.add_worksheet(title="JN_US_CC", rows="100", cols="10")
+            ws.update(values=[[now_str, now_str]], range_name="I5:J5")
+            print(f"✅ Execução registrada em {spreadsheet_id} -> JN_US_CC!I5:J5")
+        else:
+            try:
+                ws = sheet.worksheet("Dashboard")
+            except gspread.WorksheetNotFound:
+                ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
+            ws.update(values=[[now_str]], range_name="B3")
+            print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
+    except Exception as e:
+        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
+
 # ============ ATUALIZAR PLANILHA ============
 def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
     try:
