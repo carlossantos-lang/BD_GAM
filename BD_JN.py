@@ -19,8 +19,7 @@ API_TOKEN = "8jwl4v1ZmBYQlwFzPPEHNkYC8IOvRxB3ino1665b93f36cd228"
 # Planilhas com filtro por SITE (coluna)
 PLANILHAS_DOMINIOS = [
     {"spreadsheet_id": "1fvHP_NpmdGTQ4YJd8HXmwCmJ47OmF-FwpsxvJTtMmug", "subdomain_filter": None},  
-    {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc",
-     "subdomain_filter": ["www.caxiason.com.br", "thecredito.com.br", "en.de8.com.br", "us.meucartaoideal.com", "usfinancemore.com", "en.genialcredito.com", "zienic.com", "us.netdinheiro.com.br", "finance.meucreditoagora.com","en.rendademae.com","us.creativepulse23.com","en.mundodasfinancas.com.br"]},  
+    {"spreadsheet_id": "1zPJAuoIp3hCEaRVubyiFrZq3KzRAgpfp06nRW2xCKrc", "subdomain_filter": ["www.caxiason.com.br", "thecredito.com.br", "en.de8.com.br", "us.meucartaoideal.com", "usfinancemore.com", "en.genialcredito.com", "zienic.com", "us.netdinheiro.com.br", "finance.meucreditoagora.com","en.rendademae.com","us.creativepulse23.com","en.mundodasfinancas.com.br"]},  
     {"spreadsheet_id": "1jjHJUu0im18BCxKUt6ZAS7FGFO3B7VQKq2S7q-01e-Q", "subdomain_filter": ["finance.caxiason.com.br", "emp.meucreditoagora.com", "emp.thecredito.com.br", "finance.zienic.com", "finance.creativepulse23.com"]},  
     {"spreadsheet_id": "1XMVYlv1Iy5dDHiMMGRpcJ2neStF13rEeo0ou9rRw7aQ", "subdomain_filter": ["www.genialcredito.com", "www.meucartaoideal.com", "recomendacao.meucartaoideal.com", "rendademae.com", "meucreditoagora.com", "cartao.guiabancario.com.br", "financas.zienic.com", "br.netdinheiro.com.br", "br.creativepulse23.com"]},  
     {"spreadsheet_id": "1lhDZGJJflyWCfYIEhNM1vho6QKPUynGSajjYxQzf8so", "subdomain_filter": ["emprestimo.caxiason.com.br", "emprestimo.genialcredito.com", "emprestimo.meucartaoideal.com", "emprestimo.creativepulse23.com"]},  
