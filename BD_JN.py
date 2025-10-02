@@ -175,13 +175,9 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
 
         print(f"✅ {spreadsheet_id} -> Dados atualizados")
 
-        # ============ LOG DE HORA IMEDIATO ============
-        def log_execution_time(spreadsheet_id):
-    try:
-        sheet = gc.open_by_key(spreadsheet_id)
+        # ===== LOG DE HORA IMEDIATO =====
         now_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
-
-        if spreadsheet_id == PLANILHAS_DOMINIOS[0]:
+        if spreadsheet_id == PLANILHAS_DOMINIOS[0]["spreadsheet_id"]:
             try:
                 ws = sheet.worksheet("JN_US_CC")
             except gspread.WorksheetNotFound:
@@ -195,10 +191,11 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
                 ws = sheet.add_worksheet(title="Dashboard", rows="100", cols="10")
             ws.update(values=[[now_str]], range_name="B3")
             print(f"✅ Execução registrada em {spreadsheet_id} -> Dashboard!B3")
-    except Exception as e:
-        print(f"⚠️ Erro registrando execução em {spreadsheet_id}: {e}")
 
-# ============ THREADPOOL ============
+    except Exception as e:
+        print(f"❌ Erro atualizando {spreadsheet_id}: {e}")
+
+# ============ THREADPOOL PARA ATUALIZAÇÃO PARALLELA ============
 with ThreadPoolExecutor(max_workers=5) as executor:
     futures = [executor.submit(update_sheet, plan["spreadsheet_id"], plan["subdomain_filter"], all_rows) for plan in PLANILHAS_DOMINIOS]
     for future in as_completed(futures):
