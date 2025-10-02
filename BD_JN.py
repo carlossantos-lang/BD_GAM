@@ -217,6 +217,7 @@ def update_sheet(spreadsheet_id, subdomain_filter, all_rows, chunk_size=10000):
 # ============ THREADPOOL ============
 def update_and_log(plan):
     update_sheet(plan["spreadsheet_id"], plan["subdomain_filter"], all_rows)
+    log_execution_time(plan["spreadsheet_id"]) 
 
 with ThreadPoolExecutor(max_workers=5) as executor:
     futures = [executor.submit(update_and_log, plan) for plan in PLANILHAS_DOMINIOS]
